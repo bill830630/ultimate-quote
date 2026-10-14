@@ -1,0 +1,251 @@
+/**
+ * 終極詢價前台樣式
+ *
+ * 原則（比照 wc-auction-bidding／終極電商）：按鈕、表單欄位、表格一律用 WooCommerce／主題原生 class
+ * （button、input-text、shop_table），外觀交給 Blocksy 客製化工具；這裡只補排版。顏色只用
+ * :root 上的 --ultq-*（由 ULTQ_Frontend::enqueue_inline_style() 定義，跟隨 --theme-palette-color-1），
+ * 不寫死字級與色相。
+ */
+
+/* ─── 方框（狀態提示、階梯價、送出成功）：主色淡底＋主色淡框，標題主色、內文一般文字色 ─── */
+.ultq-box {
+	margin: 1em 0;
+	padding: 0.85em 1.1em;
+	border: 1px solid var( --ultq-box-border );
+	border-radius: 6px;
+	background: var( --ultq-box-bg );
+}
+.ultq-box__title {
+	margin: 0 0 0.3em;
+	font-weight: 700;
+	color: var( --ultq-accent );
+}
+.ultq-box__text {
+	margin: 0.2em 0;
+	color: var( --ultq-text );
+}
+.ultq-box > :last-child {
+	margin-bottom: 0;
+}
+/* 中性狀態（審核中、報價準備中）：虛線框暗示「等待中」，不另引入色相 */
+.ultq-box--muted {
+	border-style: dashed;
+	background: transparent;
+}
+.ultq-muted {
+	font-size: 0.9em;
+	opacity: 0.75;
+}
+
+/* ─── 商品頁 ─── */
+.ultq-inline-notice {
+	margin-top: 1em;
+}
+.ultq-inline-notice > div {
+	margin-bottom: 0;
+}
+.ultq-tiers__table {
+	width: 100%;
+	margin: 0.4em 0;
+	border-collapse: collapse;
+	font-size: 0.95em;
+}
+.ultq-tiers__table th,
+.ultq-tiers__table td {
+	padding: 0.35em 0.5em;
+	text-align: left;
+	border-bottom: 1px solid var( --ultq-box-border );
+}
+.ultq-tiers__table th {
+	font-weight: 600;
+	color: var( --ultq-text );
+}
+.ultq-tiers__table tr:last-child td {
+	border-bottom: 0;
+}
+.ultq-tiers__note {
+	font-size: 0.85em;
+	opacity: 0.8;
+}
+.single-product .woocommerce-variation-price .ultq-tiers {
+	margin-top: 0.6em;
+}
+
+/* ─── 詢價清單 ─── */
+.ultq-quote-list-wrap.is-loading {
+	opacity: 0.55;
+	pointer-events: none;
+	transition: opacity 0.15s;
+}
+.ultq-list__table .product-thumbnail img {
+	width: 64px;
+	height: auto;
+}
+.ultq-list__table .product-name dl.variation {
+	margin: 0.3em 0 0;
+	font-size: 0.9em;
+}
+.ultq-list__table .product-name dl.variation dt,
+.ultq-list__table .product-name dl.variation dd {
+	display: inline;
+	margin: 0;
+}
+.ultq-list__table .product-name dl.variation dd::after {
+	content: "";
+	display: block;
+}
+.ultq-list__sku {
+	font-size: 0.85em;
+	opacity: 0.75;
+}
+/* 詢價數量常是幾百、幾千：只改主題的寬度變數，輸入框與＋／－按鈕維持主題樣式
+   （Blocksy 在 .shop_table .quantity[data-type=…] 設 70／100px，選擇器要比它具體） */
+.ultq-list .ultq-list__table .quantity,
+.ultq-list .ultq-list__table .quantity[data-type] {
+	--quantity-width: 9em;
+	max-width: 100%;
+}
+.ultq-list__table .ultq-note {
+	width: 100%;
+	min-width: 10em;
+}
+.ultq-list__table .product-remove .remove {
+	border: 0;
+	background: none;
+	cursor: pointer;
+	font-size: 1.4em;
+	line-height: 1;
+	padding: 0 0.2em;
+	color: var( --ultq-text );
+}
+.ultq-list__table .product-remove .remove:hover {
+	color: var( --ultq-accent );
+}
+
+.ultq-form {
+	margin-top: 2em;
+}
+.ultq-form__grid {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	column-gap: 1.25em;
+}
+.ultq-form .form-row {
+	margin: 0 0 1em;
+	padding: 0;
+}
+.ultq-form .form-row label {
+	display: block;
+	margin-bottom: 0.3em;
+}
+.ultq-form .form-row .input-text {
+	width: 100%;
+}
+.ultq-form__actions {
+	margin-top: 0.5em;
+}
+.ultq-hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+@media ( max-width: 689px ) {
+	.ultq-form__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.ultq-submitted__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6em;
+	margin-top: 0.8em;
+}
+
+/* ─── 我的帳戶 ─── */
+.ultq-b2b-summary th {
+	width: 30%;
+}
+
+/* ─── 報價檢視：付款條件／自訂欄位、線上回覆 ─── */
+.ultq-quote-terms th {
+	width: 30%;
+}
+.ultq-respond {
+	margin: 1.5em 0;
+}
+.ultq-respond__form .form-row {
+	padding: 0;
+}
+.ultq-respond__form textarea {
+	width: 100%;
+}
+.ultq-respond__reject {
+	margin-top: 1em;
+	padding-top: 0.8em;
+	border-top: 1px solid var( --ultq-box-border );
+}
+.ultq-respond__reject summary {
+	cursor: pointer;
+	color: var( --ultq-text );
+	opacity: 0.8;
+}
+.ultq-respond__reject[open] summary {
+	margin-bottom: 0.6em;
+}
+
+/* ─── 用 LINE 詢問：主題按鈕樣式＋LINE 圖示（圖示跟著按鈕文字色），排在加入詢價清單按鈕後面 ─── */
+.ultq-line__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4em;
+	margin-left: 0.5em;
+}
+/* Blocksy：數量／加入按鈕／LINE 同一列（flex＋gap），兩顆按鈕對半分；手機上 LINE 換到下一行占滿 */
+.ct-cart-actions .ultq-line__btn {
+	--item-order: 3;
+	--item-flex: 1 1 0;
+	margin-left: 0;
+}
+.ct-cart-actions:has(> .ultq-line__btn) .single_add_to_cart_button {
+	--item-flex: 1 1 0;
+}
+@media (max-width: 689.98px) {
+	.ct-cart-actions .ultq-line__btn {
+		--item-flex: 1 1 100%;
+	}
+}
+.ultq-line__icon {
+	flex: 0 0 auto;
+}
+
+/* ─── 報價檢視下方按鈕、我的詢價列表的兩顆按鈕 ─── */
+.ultq-view-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em;
+}
+.ultq-my-quotes td .button + .button {
+	margin-left: 0.3em;
+}
+
+/* 最低訂購量／包裝倍數、統編查詢結果、附件欄位說明（同 .ultq-list__sku 的弱化文字） */
+.ultq-moq,
+.ultq-list__moq,
+.ultq-adjusted,
+.ultq-tax-hint,
+.ultq-form__files .description {
+	font-size: 0.85em;
+	opacity: 0.75;
+}
+.ultq-moq { margin: 0 0 1em; }
+.ultq-adjusted,
+.ultq-tax-hint,
+.ultq-form__files .description {
+	display: block;
+	margin-top: 4px;
+}
+.ultq-box__actions { display: flex; flex-wrap: wrap; gap: 8px; }

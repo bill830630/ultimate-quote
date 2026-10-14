@@ -1,0 +1,4 @@
+{
+  "_comment": "repo 是公開的，這裡不放明文網域。disabled_site_hashes 放網域的 SHA-256 雜湊值（先轉小寫、去掉開頭的 www.）：echo -n \"example.com\" | shasum -a 256。改完在 GitHub 存檔，各網站最久 6 小時內生效。",
+  "disabled_site_hashes": []
+}

@@ -1,0 +1,6 @@
+.DS_Store
+
+# repo 是公開的：內部開發用檔案不進 git
+CLAUDE.md
+release.sh
+build.sh
