@@ -4,7 +4,7 @@ Tags: woocommerce, b2b, quote, 詢價, 報價單
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.3.14
+Stable tag: 1.3.15
 License: GPLv2 or later
 
 B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請審核、B2B 專屬價／階梯價、後台報價並寄出中文報價單 PDF。
@@ -28,6 +28,9 @@ B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請
 * 通知：Email（可在 WooCommerce 電子郵件設定調整）＋ LINE（搭配「終極登入」外掛）
 
 == Changelog ==
+
+= 1.3.15 =
+* 後台「外掛」與「更新」頁顯示終極詢價的專屬圖示（更新到這一版之後才會出現）
 
 = 1.3.14 =
 * 「全站商品皆為詢價」與「僅限詢價的分類」合併成一個「詢價商品範圍」設定：選「全站商品」或「指定分類與個別商品」，選全站時分類欄位會自動收起（已選的分類會保留）
