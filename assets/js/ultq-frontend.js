@@ -132,9 +132,19 @@ jQuery( function ( $ ) {
 			} );
 	} );
 
-	// ─── 用 LINE 詢問：點擊當下依已選規格與數量重組預填訊息 ────────────────
+	// ─── 用 LINE 詢問：手機點擊當下依已選規格與數量重組預填訊息 ──────────────
+	// oaMessage 只有手機 LINE App 接得住，電腦會被轉到 line.me 首頁，所以電腦維持 PHP 給的官方帳號頁連結
+
+	function isMobileDevice() {
+		var ua = navigator.userAgent || '';
+		// iPadOS 13+ 的 Safari 偽裝成 Macintosh，用觸控點數判斷
+		return /Android|iPhone|iPad|iPod|Mobile/i.test( ua ) || ( /Macintosh/.test( ua ) && navigator.maxTouchPoints > 1 );
+	}
 
 	$( document ).on( 'click', '.ultq-line__btn', function () {
+		if ( ! isMobileDevice() ) {
+			return;
+		}
 		var $btn  = $( this );
 		var $form = $btn.closest( '.product, .summary, body' ).find( 'form.cart' ).first();
 		var name  = String( $btn.data( 'name' ) || '' );

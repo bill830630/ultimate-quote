@@ -181,6 +181,14 @@ class ULTQ_Frontend {
 		return 'https://line.me/R/oaMessage/' . rawurlencode( self::line_oa_id() ) . '/?' . rawurlencode( $text );
 	}
 
+	/**
+	 * 官方帳號頁（加好友）連結。oaMessage 只有手機 LINE App 接得住，電腦瀏覽器會被 302 轉到 line.me 首頁；
+	 * 這個連結電腦會開官方帳號頁（含 QR Code），手機一樣開 LINE App，所以當作按鈕預設 href，手機再由 JS 換成 oaMessage
+	 */
+	public static function line_add_friend_url() {
+		return 'https://line.me/R/ti/p/' . rawurlencode( self::line_oa_id() );
+	}
+
 	public static function line_message_text( $product_name, $qty, $url ) {
 		return strtr( (string) ULTQ_Settings::get( 'line_inquiry_msg', '' ), array(
 			'{product}' => $product_name,
@@ -203,8 +211,8 @@ class ULTQ_Frontend {
 
 	/**
 	 * 商品頁「用 LINE 詢問」，緊接在加入購物車／詢價按鈕後面（Blocksy 會一起包在 .ct-cart-actions 裡並排）。
-	 * 是 <a> 不是 submit，不會觸發表單送出。href 是沒有 JS 時的預設訊息；
-	 * 有 JS 時點擊當下再依已選規格與數量重組訊息（ultq-frontend.js）
+	 * 是 <a> 不是 submit，不會觸發表單送出。href 是官方帳號頁（電腦、手機都能開）；
+	 * 手機點擊當下由 JS 換成 oaMessage，依已選規格與數量預填訊息（ultq-frontend.js）
 	 */
 	public static function render_line_button() {
 		global $product;
@@ -216,7 +224,7 @@ class ULTQ_Frontend {
 		$url  = $product->get_permalink();
 		printf(
 			'<a class="button ultq-line__btn" href="%1$s" target="_blank" rel="noopener" data-oa="%2$s" data-template="%3$s" data-name="%4$s" data-url="%5$s">%6$s<span>%7$s</span></a>',
-			esc_url( self::line_message_url( self::line_message_text( $name, 1, $url ) ) ),
+			esc_url( self::line_add_friend_url() ),
 			esc_attr( self::line_oa_id() ),
 			esc_attr( (string) ULTQ_Settings::get( 'line_inquiry_msg', '' ) ),
 			esc_attr( $name ),

@@ -4,7 +4,7 @@ Tags: woocommerce, b2b, quote, 詢價, 報價單
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.3.16
+Stable tag: 1.3.17
 License: GPLv2 or later
 
 B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請審核、B2B 專屬價／階梯價、後台報價並寄出中文報價單 PDF。
@@ -28,6 +28,9 @@ B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請
 * 通知：Email（可在 WooCommerce 電子郵件設定調整）＋ LINE（搭配「終極登入」外掛）
 
 == Changelog ==
+
+= 1.3.17 =
+* 修正「用 LINE 詢問」按鈕在電腦上會跳到 LINE 首頁：電腦改開官方帳號頁（可掃 QR Code 加好友），手機一樣直接開聊天室並預填商品資訊
 
 = 1.3.16 =
 * 網站管理員與商店管理員不用申請 B2B 會員，就能直接在前台加入詢價清單、送出詢價、查看 B2B 參考價，方便測試
