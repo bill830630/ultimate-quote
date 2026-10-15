@@ -43,8 +43,9 @@ class ULTQ_Settings {
 	public static function fields() {
 		return array(
 			'general' => array(
-				'quote_all'         => array( 'type' => 'checkbox', 'label' => '全站商品皆為詢價', 'desc' => '勾選後所有商品都變成詢價商品：只有 B2B 會員能詢價，其他人看得到商品但不能購買。', 'default' => 0 ),
-				'quote_categories'  => array( 'type' => 'categories', 'label' => '僅限詢價的分類', 'desc' => '這些分類的商品變成詢價商品：隱藏售價、只有 B2B 會員能加入詢價清單。個別商品也可以在商品編輯頁勾選「僅限詢價」。其他商品 B2B 會員和一般顧客一樣直接購買。', 'default' => array() ),
+				// 詢價範圍與分類合併成一列顯示，資料仍分存 quote_all／quote_categories 兩個 key；inline 的欄位由前一個欄位一起輸出
+				'quote_all'         => array( 'type' => 'quote_scope', 'label' => '詢價商品範圍', 'desc' => '詢價商品會隱藏售價、只有 B2B 會員能加入詢價清單，其他人看得到商品但不能購買。', 'default' => 0 ),
+				'quote_categories'  => array( 'type' => 'categories', 'label' => '僅限詢價的分類', 'inline' => true, 'desc' => '這些分類的商品變成詢價商品。個別商品也可以在商品編輯頁勾選「僅限詢價」。其他商品 B2B 會員和一般顧客一樣直接購買。', 'default' => array() ),
 				'hidden_price_text' => array( 'type' => 'text', 'label' => '隱藏價格時顯示文字', 'default' => '價格請詢價' ),
 				'b2b_only_text'     => array( 'type' => 'textarea', 'label' => '非 B2B 會員看到的說明', 'desc' => '訪客與一般會員在詢價商品頁、詢價清單頁看到的文字，下方會依身分顯示「登入」或「申請 B2B 會員」按鈕。', 'default' => '此商品為 B2B 會員專屬，成為 B2B 會員後即可查看批發價格並線上詢價。' ),
 				'button_text'       => array( 'type' => 'text', 'label' => '詢價按鈕文字', 'default' => '加入詢價清單' ),
@@ -181,6 +182,9 @@ class ULTQ_Settings {
 			switch ( $field['type'] ) {
 				case 'checkbox':
 					$saved[ $key ] = empty( $raw ) ? 0 : 1;
+					break;
+				case 'quote_scope':
+					$saved[ $key ] = '1' === (string) $raw ? 1 : 0;
 					break;
 				case 'number':
 					$value = is_numeric( $raw ) ? (float) $raw : (float) $field['default'];
@@ -324,6 +328,11 @@ class ULTQ_Settings {
 				<input type="hidden" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[_tab]" value="<?php echo esc_attr( $tab ); ?>">
 				<table class="form-table" role="presentation">
 					<?php foreach ( $fields as $key => $field ) : ?>
+						<?php
+						if ( ! empty( $field['inline'] ) ) {
+							continue;
+						}
+						?>
 						<tr>
 							<th scope="row"><label for="ultq-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label></th>
 							<td>
@@ -355,6 +364,29 @@ class ULTQ_Settings {
 					checked( 1, (int) $value, false ),
 					wp_kses_post( $field['desc'] ?? '' )
 				);
+				break;
+
+			case 'quote_scope':
+				$scopes = array(
+					'1' => '全站商品',
+					'0' => '指定分類與個別商品',
+				);
+				echo '<fieldset class="ultq-quote-scope"><legend class="screen-reader-text">' . esc_html( $field['label'] ) . '</legend>';
+				foreach ( $scopes as $opt => $label ) {
+					printf(
+						'<label><input type="radio" name="%s" value="%s" %s> %s</label><br>',
+						esc_attr( $name ),
+						esc_attr( $opt ),
+						checked( (string) (int) $value, $opt, false ),
+						esc_html( $label )
+					);
+				}
+				// 全站時分類用不到，JS 隱藏；已選的分類照樣送出保留，切回「指定」時不必重選
+				$cats = self::fields()['general']['quote_categories'];
+				echo '<div class="ultq-quote-scope__cats">';
+				self::render_field( 'quote_categories', $cats );
+				printf( '<p class="description">%s</p>', wp_kses_post( $cats['desc'] ) );
+				echo '</div></fieldset>';
 				break;
 
 			case 'number':

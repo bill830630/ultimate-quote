@@ -179,3 +179,4 @@
 /* 設定頁：分類多選（selectWoo） */
 .ultq-term-select,
 .form-table .ultq-term-select + .select2-container { width: 100% !important; max-width: 480px; }
+.ultq-quote-scope__cats { margin-top: 12px; }

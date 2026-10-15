@@ -1,5 +1,5 @@
 /**
- * 終極詢價後台：詢價單編輯頁（即時試算、商品搜尋加入、折讓、會員帶入、統編查詢、寄出確認）、設定頁（選擇圖片）
+ * 終極詢價後台：詢價單編輯頁（即時試算、商品搜尋加入、折讓、會員帶入、統編查詢、寄出確認）、設定頁（詢價範圍、選擇圖片）
  */
 jQuery( function ( $ ) {
 	var cfg = window.ultqAdmin || {};
@@ -197,6 +197,17 @@ jQuery( function ( $ ) {
 		$cf.on( 'click', '.ultq-cf-remove', function () {
 			$( this ).closest( '.ultq-cf-row' ).remove();
 		} );
+	}
+
+	// ─── 設定頁：詢價商品範圍（全站時隱藏分類）───────────────────────────
+
+	var $scope = $( '.ultq-quote-scope' );
+	if ( $scope.length ) {
+		var toggleScope = function () {
+			$scope.find( '.ultq-quote-scope__cats' ).toggle( '1' !== $scope.find( 'input[type=radio]:checked' ).val() );
+		};
+		$scope.on( 'change', 'input[type=radio]', toggleScope );
+		toggleScope();
 	}
 
 	// ─── 設定頁：報價單欄位排序 ───────────────────────────────────────────
