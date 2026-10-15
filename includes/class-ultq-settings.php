@@ -73,7 +73,7 @@ class ULTQ_Settings {
 				'company_tax_id'  => array( 'type' => 'text', 'label' => '統一編號', 'default' => '' ),
 				'company_address' => array( 'type' => 'text', 'label' => '地址', 'default' => '' ),
 				'company_phone'   => array( 'type' => 'text', 'label' => '電話', 'default' => '' ),
-				'company_email'   => array( 'type' => 'text', 'label' => 'Email', 'default' => get_option( 'admin_email' ) ),
+				'company_email'   => array( 'type' => 'text', 'label' => 'Email', 'desc' => '印在報價單上給顧客聯絡用，留空就不顯示。', 'default' => '' ),
 				'logo_id'         => array( 'type' => 'media', 'label' => '報價單 Logo', 'default' => 0 ),
 				'stamp_id'        => array( 'type' => 'media', 'label' => '公司印章圖', 'desc' => '建議使用去背 PNG，顯示在報價單右下角。', 'default' => 0 ),
 				'number_prefix'   => array( 'type' => 'text', 'label' => '報價單號前綴', 'desc' => '單號格式：前綴-年月日-流水號，例如 Q-20261012-0001。', 'default' => 'Q' ),
