@@ -140,7 +140,7 @@ class ULTQ_Quote_Post {
 			return $post_id;
 		}
 
-		$is_b2b = $user_id && ULTQ_B2B_Member::is_approved( $user_id );
+		$is_b2b = ULTQ_Rules::is_b2b( $user_id );
 		$rows   = array();
 		foreach ( $items as $item ) {
 			$product = wc_get_product( $item['variation_id'] ?: $item['product_id'] );

@@ -418,7 +418,7 @@ class ULTQ_Admin {
 		$quote    = ULTQ_Quote_Post::get_quote( $post->ID );
 		$totals   = ULTQ_Quote_Post::totals( $post->ID, $items, $quote );
 		$user_id  = ULTQ_Quote_Post::get_user_id( $post->ID );
-		$is_b2b   = $user_id && ULTQ_B2B_Member::is_approved( $user_id );
+		$is_b2b   = ULTQ_Rules::is_b2b( $user_id );
 		$has_unit = in_array( 'col_unit', ULTQ_PDF::enabled( 'items' ), true );
 		$colspan  = $has_unit ? 8 : 7;
 		?>
@@ -873,7 +873,7 @@ class ULTQ_Admin {
 			wp_send_json_error( array( 'message' => $product ? '請選擇可變商品底下的規格。' : '找不到這個商品。' ) );
 		}
 		$user_id = absint( $_POST['user_id'] ?? 0 );
-		$is_b2b  = $user_id && ULTQ_B2B_Member::is_approved( $user_id );
+		$is_b2b  = ULTQ_Rules::is_b2b( $user_id );
 		$qty     = ULTQ_Quantity::rules( $product )['min'];
 		$price   = $is_b2b ? ULTQ_B2B_Pricing::get_b2b_price( $product, $qty ) : null;
 		if ( null === $price && '' !== $product->get_price() ) {

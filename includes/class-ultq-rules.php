@@ -3,7 +3,7 @@
  * 「這個商品對這個人是不是走詢價」的單一判斷入口，前台所有 hook 都只問這裡
  *
  * - 詢價商品 = 全站開關 ｜ 商品勾選 _ultq_quote_only ｜ 屬於設定頁指定的分類；對所有人都不能加入購物車、隱藏一般售價
- * - 只有已核准的 B2B 會員能把詢價商品加入詢價清單、送出詢價（看得到 B2B 參考價）；
+ * - 只有已核准的 B2B 會員能把詢價商品加入詢價清單、送出詢價（看得到 B2B 參考價）；管理員與商店管理員視同 B2B 會員（1.3.16）；
  *   訪客與一般會員看得到商品，但加入按鈕換成「B2B 會員專屬」說明（ULTQ_Frontend::b2b_gate_html()）
  * - 一般商品對 B2B 會員和其他人都一樣，照售價直接購買（1.3.8 起；之前 B2B 會員是全站商品都走詢價）
  */
@@ -57,9 +57,13 @@ class ULTQ_Rules {
 		return self::$cache[ $id ];
 	}
 
+	/** 已核准的 B2B 會員；管理員與商店管理員（manage_woocommerce）也算，方便直接在前台測試詢價 */
 	public static function is_b2b( $user_id = null ) {
 		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
-		return ULTQ_B2B_Member::is_approved( $user_id );
+		if ( ! $user_id ) {
+			return false;
+		}
+		return ULTQ_B2B_Member::is_approved( $user_id ) || user_can( $user_id, 'manage_woocommerce' );
 	}
 
 	/** 這個商品是不是詢價商品（不能加入購物車、隱藏一般售價）；能不能詢價另外看 can_request_quote() */
@@ -71,7 +75,7 @@ class ULTQ_Rules {
 		return (bool) apply_filters( 'ultq_is_quote_only', self::is_flagged( $base ), $base, $user_id );
 	}
 
-	/** 目前的人可不可以詢價：只有已核准的 B2B 會員 */
+	/** 目前的人可不可以詢價：已核准的 B2B 會員（含管理員，見 is_b2b()） */
 	public static function can_request_quote( $user_id = null ) {
 		return (bool) apply_filters( 'ultq_can_request_quote', self::is_b2b( $user_id ), $user_id );
 	}
