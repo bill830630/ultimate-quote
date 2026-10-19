@@ -165,17 +165,23 @@ class ULTQ_Sales {
 		return $views;
 	}
 
-	/** @return array user ID => 顯示名稱 */
+	/** 業務名單只收「業務」與「商店經理」角色，管理員不列入。@return array user ID => 暱稱 */
 	public static function users() {
 		static $users = null;
 		if ( null === $users ) {
 			$users = array();
-			foreach ( get_users( array( 'capability__in' => array( 'manage_woocommerce', self::CAPABILITY ), 'orderby' => 'display_name', 'fields' => array( 'ID', 'display_name' ) ) ) as $user ) {
-				$users[ (int) $user->ID ] = $user->display_name;
+			foreach ( get_users( array( 'role__in' => array( self::ROLE, 'shop_manager' ) ) ) as $user ) {
+				$users[ (int) $user->ID ] = self::nickname( $user );
 			}
+			asort( $users, SORT_NATURAL | SORT_FLAG_CASE );
 			$users = (array) apply_filters( 'ultq_sales_users', $users );
 		}
 		return $users;
+	}
+
+	/** 選單上顯示的帳號暱稱，沒填時退回顯示名稱 */
+	public static function nickname( $user ) {
+		return (string) $user->nickname ?: $user->display_name;
 	}
 
 	public static function is_sales( $user_id ) {

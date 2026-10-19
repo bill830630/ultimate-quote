@@ -266,7 +266,7 @@ class ULTQ_Admin {
 					// 目前的負責人已不在業務名單（例如權限被拿掉）時仍列出來，否則一儲存就會被改成「未指派」
 					if ( $owner && ! isset( $sales_users[ $owner ] ) ) {
 						$former = get_userdata( $owner );
-						$sales_users[ $owner ] = ( $former ? $former->display_name : '#' . $owner ) . '（已不在業務名單）';
+						$sales_users[ $owner ] = ( $former ? ULTQ_Sales::nickname( $former ) : '#' . $owner ) . '（已不在業務名單）';
 					}
 					foreach ( $sales_users as $id => $name ) :
 						?>
