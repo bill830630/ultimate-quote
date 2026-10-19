@@ -34,7 +34,7 @@ class ULTQ_Email_B2B_Application extends ULTQ_Email_Base {
 			return false;
 		}
 		$data                             = ULTQ_B2B_Member::get_data( $user_id );
-		$this->placeholders['{company}']  = $data['company'];
+		$this->placeholders['{company}']  = $data['company'] ?: $data['contact'];
 		$this->extra                      = array(
 			'data'         => $data,
 			'auto_approve' => (bool) ULTQ_Settings::get( 'b2b_auto_approve' ),

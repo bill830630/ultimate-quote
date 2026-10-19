@@ -15,7 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="ultq-box ultq-submitted">
 	<h3 class="ultq-box__title">已收到您的詢價</h3>
 	<p class="ultq-box__text">詢價單號：<strong><?php echo esc_html( $number ); ?></strong></p>
-	<p class="ultq-box__text">確認信已寄到 <?php echo esc_html( $email ); ?>，我們會盡快為您報價。</p>
+	<?php if ( $email ) : ?>
+		<p class="ultq-box__text">確認信已寄到 <?php echo esc_html( $email ); ?>，我們會盡快為您報價。</p>
+	<?php else : ?>
+		<p class="ultq-box__text">我們會盡快為您報價，您可以在「我的詢價」查看處理進度。</p>
+	<?php endif; ?>
 	<p class="ultq-submitted__actions">
 		<a class="button wp-element-button" href="<?php echo esc_url( $shop_url ); ?>">繼續逛逛</a>
 		<?php if ( $my_url ) : ?>

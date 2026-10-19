@@ -42,32 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<form method="post" class="ultq-b2b-form">
 		<?php wp_nonce_field( 'ultq_b2b_apply', '_ultq_nonce' ); ?>
 		<input type="hidden" name="ultq_b2b_apply" value="1">
-		<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-			<label for="ultq-b2b-company">公司名稱&nbsp;<abbr class="required" title="必填">*</abbr></label>
-			<input type="text" class="woocommerce-Input input-text" id="ultq-b2b-company" name="company" value="<?php echo esc_attr( $data['company'] ); ?>" required>
-		</p>
-		<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
-			<label for="ultq-b2b-tax-id">統一編號&nbsp;<abbr class="required" title="必填">*</abbr></label>
-			<input type="text" class="woocommerce-Input input-text" id="ultq-b2b-tax-id" name="tax_id" value="<?php echo esc_attr( $data['tax_id'] ); ?>" inputmode="numeric" maxlength="8" required data-ultq-tax-lookup data-company="#ultq-b2b-company" data-address="#ultq-b2b-address">
-		</p>
-		<p class="woocommerce-form-row woocommerce-form-row--last form-row form-row-last">
-			<label for="ultq-b2b-contact">聯絡人&nbsp;<abbr class="required" title="必填">*</abbr></label>
-			<input type="text" class="woocommerce-Input input-text" id="ultq-b2b-contact" name="contact" value="<?php echo esc_attr( $data['contact'] ); ?>" required>
-		</p>
-		<div class="clear"></div>
-		<p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
-			<label for="ultq-b2b-phone">聯絡電話&nbsp;<abbr class="required" title="必填">*</abbr></label>
-			<input type="tel" class="woocommerce-Input input-text" id="ultq-b2b-phone" name="phone" value="<?php echo esc_attr( $data['phone'] ); ?>" required>
-		</p>
-		<p class="woocommerce-form-row woocommerce-form-row--last form-row form-row-last">
-			<label for="ultq-b2b-address">公司地址</label>
-			<input type="text" class="woocommerce-Input input-text" id="ultq-b2b-address" name="address" value="<?php echo esc_attr( $data['address'] ); ?>">
-		</p>
-		<div class="clear"></div>
-		<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-			<label for="ultq-b2b-note">備註</label>
-			<textarea class="woocommerce-Input input-text" id="ultq-b2b-note" name="note" rows="3" placeholder="營業項目、預計採購品項等（選填）"><?php echo esc_textarea( $data['note'] ); ?></textarea>
-		</p>
+		<?php echo ULTQ_Helper::get_template_html( 'customer-fields.php', array( 'scope' => 'b2b', 'data' => $data ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<p>
 			<button type="submit" class="woocommerce-Button button wp-element-button">送出申請</button>
 		</p>
@@ -78,12 +53,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<table class="shop_table shop_table_responsive ultq-b2b-summary">
 		<tbody>
 			<tr><th>狀態</th><td><?php echo esc_html( $labels[ $status ] ?? $status ); ?></td></tr>
+			<tr><th>採購身分</th><td><?php echo esc_html( ULTQ_Form::types()[ ULTQ_Form::customer_type( $data ) ] ); ?></td></tr>
+			<?php if ( $data['company'] ) : ?>
 			<tr><th>公司名稱</th><td><?php echo esc_html( $data['company'] ); ?></td></tr>
+			<?php endif; ?>
+			<?php if ( $data['tax_id'] ) : ?>
 			<tr><th>統一編號</th><td><?php echo esc_html( $data['tax_id'] ); ?></td></tr>
+			<?php endif; ?>
 			<tr><th>聯絡人</th><td><?php echo esc_html( $data['contact'] ); ?></td></tr>
 			<tr><th>聯絡電話</th><td><?php echo esc_html( $data['phone'] ); ?></td></tr>
 			<?php if ( $data['address'] ) : ?>
-				<tr><th>公司地址</th><td><?php echo esc_html( $data['address'] ); ?></td></tr>
+				<tr><th>地址</th><td><?php echo esc_html( $data['address'] ); ?></td></tr>
 			<?php endif; ?>
 		</tbody>
 	</table>

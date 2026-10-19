@@ -6,7 +6,7 @@
  * 其餘資料都在 post meta（量不大，不另建資料表）：
  * - _ultq_number      報價單號
  * - _ultq_user_id     顧客 user ID（給「我的詢價」查詢用）
- * - _ultq_customer    顧客資料陣列（name/company/tax_id/email/phone/address/message）
+ * - _ultq_customer    顧客資料陣列（customer_type/name/company/tax_id/email/phone/address/message）
  * - _ultq_items       品項陣列（見 normalize_item()）
  * - _ultq_quote       報價欄位陣列（shipping/tax_mode/tax_rate/valid_until/note/admin_note/style/payment_terms/fields/discounts）
  *                     fields = 自訂欄位的值，key 是 ULTQ_Settings::custom_fields() 的 id
@@ -291,10 +291,12 @@ class ULTQ_Quote_Post {
 
 	public static function get_customer( $post_id ) {
 		$customer = get_post_meta( $post_id, '_ultq_customer', true );
-		return array_merge(
+		$customer = array_merge(
 			array( 'name' => '', 'company' => '', 'tax_id' => '', 'email' => '', 'phone' => '', 'address' => '', 'message' => '' ),
 			is_array( $customer ) ? $customer : array()
 		);
+		$customer['customer_type'] = ULTQ_Form::customer_type( $customer );
+		return $customer;
 	}
 
 	public static function get_items( $post_id ) {

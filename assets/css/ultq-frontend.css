@@ -130,6 +130,68 @@
 	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
 	column-gap: 1.25em;
 }
+.ultq-customer-fields [hidden] {
+	display: none !important;
+}
+.ultq-customer-type {
+	margin: 0 0 1.5em;
+	padding: 0;
+	border: 0;
+}
+.ultq-customer-type legend {
+	/* Blocksy 的 legend 有 margin-left: -15px，這裡需完整重設。 */
+	margin: 0 0 0.65em;
+	padding: 0;
+	font-size: inherit;
+	font-weight: 600;
+}
+.ultq-customer-type__options {
+	display: grid;
+	grid-template-columns: repeat( 2, minmax( 0, 1fr ) );
+	gap: 0.8em 1.25em;
+}
+.ultq-customer-type .ultq-customer-type__option {
+	display: flex;
+	align-items: center;
+	gap: 0.8em;
+	margin: 0;
+	padding: 1em;
+	border: 1px solid var( --ultq-border );
+	border-radius: 8px;
+	cursor: pointer;
+	transition: border-color 150ms ease, background-color 150ms ease;
+}
+.ultq-customer-type__option:hover {
+	border-color: var( --ultq-accent );
+}
+.ultq-customer-type__option:has( input:checked ) {
+	border-color: var( --ultq-accent );
+	background: var( --ultq-box-bg );
+}
+.ultq-customer-type__option:focus-within {
+	outline: 2px solid var( --ultq-accent );
+	outline-offset: 3px;
+}
+.ultq-customer-type__option input[type="radio"] {
+	flex: 0 0 auto;
+	margin: 0;
+	accent-color: var( --ultq-accent );
+}
+.ultq-customer-type__content {
+	display: grid;
+	gap: 0.3em;
+	min-width: 0;
+}
+.ultq-customer-type__content strong {
+	font-weight: 600;
+}
+.ultq-customer-type__content small {
+	color: var( --ultq-text );
+	line-height: 1.5;
+}
+.ultq-field-wide {
+	grid-column: 1 / -1;
+}
 .ultq-form .form-row {
 	margin: 0 0 1em;
 	padding: 0;
@@ -144,6 +206,113 @@
 .ultq-form__actions {
 	margin-top: 0.5em;
 }
+.ultq-upload {
+	position: relative;
+}
+.ultq-upload [hidden] {
+	display: none !important;
+}
+.ultq-upload__input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset( 50% );
+	white-space: nowrap;
+}
+.ultq-form .ultq-upload .ultq-upload__dropzone {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.55em;
+	padding: 1.5em 1em;
+	border: 1px dashed var( --ultq-border );
+	border-radius: 8px;
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 150ms ease, background-color 150ms ease;
+}
+.ultq-upload__dropzone:hover,
+.ultq-upload__dropzone.is-dragging,
+.ultq-upload__dropzone:focus-within {
+	border-color: var( --ultq-accent );
+	background: var( --ultq-box-bg );
+}
+.ultq-upload__input:focus-visible + .ultq-upload__dropzone {
+	outline: 2px solid var( --ultq-accent );
+	outline-offset: 3px;
+}
+.ultq-upload__icon {
+	color: var( --ultq-accent );
+}
+.ultq-upload__dropzone small,
+.ultq-upload__meta,
+.ultq-upload__file-info small {
+	color: var( --ultq-text );
+}
+.ultq-upload__meta {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.5em 1em;
+	margin-top: 0.65em;
+}
+.ultq-upload__formats {
+	max-width: 100%;
+	min-width: 0;
+}
+.ultq-upload__formats summary {
+	cursor: pointer;
+}
+.ultq-upload__formats p {
+	max-width: 40em;
+	margin: 0.5em 0;
+	overflow-wrap: anywhere;
+}
+.ultq-upload .ultq-upload__list {
+	display: grid;
+	gap: 0.5em;
+	margin: 0.8em 0 0;
+	padding: 0;
+	list-style: none;
+}
+.ultq-upload__file {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1em;
+	margin: 0;
+	padding: 0.75em 1em;
+	border: 1px solid var( --ultq-border );
+	border-radius: 6px;
+}
+.ultq-upload__file-info {
+	display: grid;
+	min-width: 0;
+}
+.ultq-upload__name {
+	overflow-wrap: anywhere;
+}
+.ultq-upload .ultq-upload__remove {
+	flex: 0 0 auto;
+	min-height: 0;
+	padding: 0.4em 0.6em;
+	border: 0;
+	background: transparent;
+	color: var( --ultq-accent );
+	line-height: inherit;
+	cursor: pointer;
+}
+.ultq-upload__remove:hover {
+	text-decoration: underline;
+}
+.ultq-upload .ultq-upload__error {
+	margin: 0.65em 0 0;
+	padding: 0.6em 0.8em;
+	border-left: 3px solid var( --ultq-accent );
+	background: var( --ultq-box-bg );
+}
 .ultq-hp {
 	position: absolute !important;
 	left: -9999px !important;
@@ -153,6 +322,9 @@
 }
 @media ( max-width: 689px ) {
 	.ultq-form__grid {
+		grid-template-columns: 1fr;
+	}
+	.ultq-customer-type__options {
 		grid-template-columns: 1fr;
 	}
 }

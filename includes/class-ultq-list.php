@@ -266,7 +266,7 @@ class ULTQ_List {
 
 	/** 送出表單預填（後台開單選會員時也用）：B2B 申請資料 → WooCommerce 帳單資料 */
 	public static function prefill_customer( $user_id = null ) {
-		$data = array( 'name' => '', 'company' => '', 'tax_id' => '', 'email' => '', 'phone' => '', 'address' => '' );
+		$data = array( 'name' => '', 'company' => '', 'tax_id' => '', 'email' => '', 'phone' => '', 'address' => '', 'customer_type' => 'personal' );
 		$user = null === $user_id ? wp_get_current_user() : get_userdata( (int) $user_id );
 		if ( ! $user || ! $user->exists() ) {
 			return $data;
@@ -276,6 +276,7 @@ class ULTQ_List {
 		$data['name']    = $b2b['contact'] ?: ( trim( $customer->get_billing_last_name() . $customer->get_billing_first_name() ) ?: $user->display_name );
 		$data['company'] = $b2b['company'] ?: $customer->get_billing_company();
 		$data['tax_id']  = $b2b['tax_id'];
+		$data['customer_type'] = metadata_exists( 'user', $user->ID, ULTQ_B2B_Member::META_DATA ) ? $b2b['customer_type'] : ( $data['company'] || $data['tax_id'] ? 'company' : 'personal' );
 		$data['email']   = $customer->get_billing_email() ?: $user->user_email;
 		$data['phone']   = $b2b['phone'] ?: $customer->get_billing_phone();
 		$data['address'] = $b2b['address'] ?: trim( $customer->get_billing_state() . $customer->get_billing_city() . $customer->get_billing_address_1() );

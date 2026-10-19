@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Ultimate Quote
  * Description: B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請審核、B2B 專屬價／階梯價、後台報價並寄出中文報價單 PDF，Email＋LINE 通知。
- * Version:     1.3.17
+ * Version:     1.3.22
  * Author:      快捷鍵Ctrl+A
  * Text Domain: ultimate-quote
  * Requires Plugins: woocommerce
@@ -13,12 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ULTQ_VERSION', '1.3.17' );
+define( 'ULTQ_VERSION', '1.3.22' );
 define( 'ULTQ_PLUGIN_FILE', __FILE__ );
 define( 'ULTQ_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ULTQ_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once ULTQ_PLUGIN_DIR . 'includes/class-ultq-install.php';
+require_once ULTQ_PLUGIN_DIR . 'includes/class-ultq-form.php';
 require_once ULTQ_PLUGIN_DIR . 'includes/class-ultq-settings.php';
 require_once ULTQ_PLUGIN_DIR . 'includes/class-ultq-helper.php';
 require_once ULTQ_PLUGIN_DIR . 'includes/class-ultq-quote-post.php';

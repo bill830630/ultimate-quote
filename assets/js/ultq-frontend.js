@@ -182,6 +182,9 @@ jQuery( function ( $ ) {
 		taxTimer = setTimeout( function () {
 			$input.data( 'ultqLooked', taxId );
 			post( 'ultq_tax_lookup', { tax_id: taxId } ).done( function ( res ) {
+				if ( $input.prop( 'disabled' ) ) {
+					return;
+				}
 				var $hint = $input.siblings( '.ultq-tax-hint' );
 				if ( ! $hint.length ) {
 					$hint = $( '<small class="ultq-tax-hint"></small>' ).insertAfter( $input );
@@ -199,6 +202,21 @@ jQuery( function ( $ ) {
 				$hint.text( data.i18n.taxFound + res.data.name + ( res.data.status ? '（' + res.data.status + '）' : '' ) );
 			} );
 		}, 300 );
+	} );
+
+	// 兩個表單共用戶別規則；放在詢價清單的 early return 前，會員申請頁也要執行。
+	$( document ).on( 'change', '.ultq-customer-fields input[name="customer_type"]', function () {
+		var $fields = $( this ).closest( '.ultq-customer-fields' );
+		var rules = $fields.data( 'rules' )[ this.value ] || {};
+		$fields.find( '[data-customer-field]' ).each( function () {
+			var $row = $( this );
+			var rule = rules[ $row.data( 'customer-field' ) ] || 'hidden';
+			var hidden = rule === 'hidden';
+			var required = rule === 'required';
+			$row.prop( 'hidden', hidden );
+			$row.find( 'input, textarea' ).prop( 'disabled', hidden ).prop( 'required', required ).attr( 'aria-required', String( required ) );
+			$row.find( 'abbr.required' ).prop( 'hidden', ! required );
+		} );
 	} );
 
 	// ─── 詢價清單頁 ───────────────────────────────────────────────────────
@@ -279,6 +297,93 @@ jQuery( function ( $ ) {
 			} );
 	} );
 
+	// ─── 附件：可累加選取／拖放，保留 File 物件，移除後不會隨 FormData 送出 ───
+	function uploadFiles( input ) {
+		return input ? ( input.ultqFiles || Array.prototype.slice.call( input.files || [] ) ) : [];
+	}
+
+	function uploadSize( bytes ) {
+		if ( bytes < 1024 ) { return bytes + ' B'; }
+		if ( bytes < 1024 * 1024 ) { return ( bytes / 1024 ).toFixed( 1 ) + ' KB'; }
+		return ( bytes / ( 1024 * 1024 ) ).toFixed( 1 ) + ' MB';
+	}
+
+	function mergeUploadFiles( current, added, accept, maxFiles, maxBytes ) {
+		var next = current.slice();
+		var allowed = accept.toLowerCase().split( ',' );
+		for ( var i = 0; i < added.length; i++ ) {
+			var file = added[ i ];
+			var dot = file.name.lastIndexOf( '.' );
+			if ( dot < 0 || allowed.indexOf( file.name.slice( dot ).toLowerCase() ) === -1 ) {
+				return { error: '「' + file.name + '」的格式不支援，請查看可上傳的檔案格式。' };
+			}
+			if ( maxBytes && file.size > maxBytes ) {
+				return { error: '「' + file.name + '」超過單檔上限 ' + uploadSize( maxBytes ) + '。' };
+			}
+			var duplicate = next.some( function ( saved ) {
+				return saved.name === file.name && saved.size === file.size && saved.lastModified === file.lastModified;
+			} );
+			if ( ! duplicate ) { next.push( file ); }
+		}
+		if ( maxFiles && next.length > maxFiles ) {
+			return { error: '最多可加入 ' + maxFiles + ' 個附件，請先移除不需要的檔案。' };
+		}
+		return { files: next };
+	}
+
+	function renderUploads( input ) {
+		var $upload = $( input ).closest( '.ultq-upload' );
+		var files = uploadFiles( input );
+		var $list = $upload.find( '.ultq-upload__list' ).empty().prop( 'hidden', ! files.length );
+		var total = 0;
+		files.forEach( function ( file, index ) {
+			total += file.size;
+			var $row = $( '<li class="ultq-upload__file"></li>' );
+			var $info = $( '<span class="ultq-upload__file-info"></span>' );
+			$( '<span class="ultq-upload__name"></span>' ).text( file.name ).appendTo( $info );
+			$( '<small></small>' ).text( uploadSize( file.size ) ).appendTo( $info );
+			$info.appendTo( $row );
+			$( '<button type="button" class="ultq-upload__remove">移除</button>' ).attr( { 'data-index': index, 'aria-label': '移除附件：' + file.name } ).appendTo( $row );
+			$row.appendTo( $list );
+		} );
+		$upload.find( '.ultq-upload__status' ).text( files.length ? '已選 ' + files.length + ' 個附件 · 共 ' + uploadSize( total ) : '尚未選擇附件' );
+		$upload.find( '.ultq-upload__prompt' ).text( files.length ? '點選或拖曳，繼續加入檔案' : '點選或拖曳檔案至此' );
+	}
+
+	function addUploads( input, added ) {
+		var $upload = $( input ).closest( '.ultq-upload' );
+		var result = mergeUploadFiles( input.ultqFiles || [], Array.prototype.slice.call( added ), input.accept, parseInt( $( input ).data( 'max-files' ), 10 ) || 0, parseInt( $( input ).data( 'max-bytes' ), 10 ) || 0 );
+		$upload.find( '.ultq-upload__error' ).text( result.error || '' ).prop( 'hidden', ! result.error );
+		if ( ! result.error ) { input.ultqFiles = result.files; }
+		// 清空原生選取，允許移除後再次選同一檔；實際送出使用上方累積的 File 清單。
+		input.value = '';
+		renderUploads( input );
+	}
+
+	$wrap.on( 'change', '.ultq-upload__input', function () { addUploads( this, this.files ); } );
+	$wrap.on( 'dragover', '.ultq-upload__dropzone', function ( e ) {
+		e.preventDefault();
+		e.originalEvent.dataTransfer.dropEffect = 'copy';
+		$( this ).addClass( 'is-dragging' );
+	} );
+	$wrap.on( 'dragleave', '.ultq-upload__dropzone', function ( e ) {
+		if ( ! this.contains( e.relatedTarget ) ) { $( this ).removeClass( 'is-dragging' ); }
+	} );
+	$wrap.on( 'drop', '.ultq-upload__dropzone', function ( e ) {
+		e.preventDefault();
+		$( this ).removeClass( 'is-dragging' );
+		addUploads( $( this ).closest( '.ultq-upload' ).find( 'input[type="file"]' ).get( 0 ), e.originalEvent.dataTransfer.files );
+	} );
+	$wrap.on( 'click', '.ultq-upload__remove', function () {
+		var $upload = $( this ).closest( '.ultq-upload' );
+		var input = $upload.find( 'input[type="file"]' ).get( 0 );
+		var index = Number( $( this ).attr( 'data-index' ) );
+		input.ultqFiles = uploadFiles( input ).filter( function ( file, i ) { return i !== index; } );
+		$upload.find( '.ultq-upload__error' ).empty().prop( 'hidden', true );
+		renderUploads( input );
+		$( input ).trigger( 'focus' );
+	} );
+
 	$wrap.on( 'submit', '.ultq-form', function ( e ) {
 		e.preventDefault();
 		var $form   = $( this );
@@ -286,10 +391,13 @@ jQuery( function ( $ ) {
 		if ( $submit.prop( 'disabled' ) ) {
 			return;
 		}
+		if ( ! this.reportValidity() ) {
+			return;
+		}
 
 		// 有附件時改用 FormData（multipart）送出，先在前端擋掉張數／大小超過的
 		var fileInput = $form.find( 'input[type="file"]' ).get( 0 );
-		var files     = fileInput && fileInput.files ? fileInput.files : [];
+		var files     = uploadFiles( fileInput );
 		var maxFiles  = parseInt( $( fileInput ).data( 'max-files' ), 10 ) || 0;
 		var maxBytes  = parseInt( $( fileInput ).data( 'max-bytes' ), 10 ) || 0;
 		if ( maxFiles && files.length > maxFiles ) {
@@ -306,6 +414,8 @@ jQuery( function ( $ ) {
 		var request;
 		if ( files.length && window.FormData ) {
 			var formData = new FormData( $form.get( 0 ) );
+			formData.delete( 'ultq_files[]' );
+			files.forEach( function ( file ) { formData.append( 'ultq_files[]', file, file.name ); } );
 			formData.append( 'action', 'ultq_submit' );
 			formData.append( 'nonce', data.nonce );
 			request = $.ajax( { url: data.ajaxUrl, type: 'POST', data: formData, processData: false, contentType: false } );

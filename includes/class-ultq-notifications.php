@@ -74,6 +74,7 @@ class ULTQ_Notifications {
 		$owner = ULTQ_Sales::get_owner( $post_id );
 		$title = '新詢價 ' . ULTQ_Quote_Post::get_number( $post_id );
 		$rows  = array(
+			array( '採購身分', ULTQ_Form::types()[ ULTQ_Form::customer_type( $customer ) ] ),
 			array( '聯絡人', $customer['name'] ),
 			array( '公司', $customer['company'] ),
 			array( '電話', $customer['phone'] ),
@@ -200,6 +201,7 @@ class ULTQ_Notifications {
 		ULTQ_Helper::push_line_to_admins(
 			'新的 B2B 會員申請',
 			array(
+				array( '採購身分', ULTQ_Form::types()[ ULTQ_Form::customer_type( $data ) ] ),
 				array( '公司', $data['company'] ),
 				array( '統編', $data['tax_id'] ),
 				array( '聯絡人', $data['contact'] ),

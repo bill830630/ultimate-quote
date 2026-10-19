@@ -88,10 +88,12 @@ class ULTQ_B2B_Member {
 
 	public static function get_data( $user_id ) {
 		$data = get_user_meta( $user_id, self::META_DATA, true );
-		return array_merge(
+		$data = array_merge(
 			array( 'company' => '', 'tax_id' => '', 'contact' => '', 'phone' => '', 'address' => '', 'note' => '' ),
 			is_array( $data ) ? $data : array()
 		);
+		$data['customer_type'] = ULTQ_Form::customer_type( $data );
+		return $data;
 	}
 
 	public static function approve( $user_id ) {
@@ -175,12 +177,13 @@ class ULTQ_B2B_Member {
 		$data    = self::get_data( $user_id );
 
 		// 尚未申請時，用帳單資料預填
-		if ( ! $status && '' === $data['company'] ) {
+		if ( ! $status && ! metadata_exists( 'user', $user_id, self::META_DATA ) ) {
 			$customer = new WC_Customer( $user_id );
 			$data['company'] = $customer->get_billing_company();
 			$data['contact'] = trim( $customer->get_billing_last_name() . $customer->get_billing_first_name() ) ?: wp_get_current_user()->display_name;
 			$data['phone']   = $customer->get_billing_phone();
 			$data['address'] = trim( $customer->get_billing_state() . $customer->get_billing_city() . $customer->get_billing_address_1() );
+			$data['customer_type'] = $data['company'] ? 'company' : 'personal';
 		}
 
 		// 申請表單的統編自動帶公司名稱要用前台 JS
@@ -208,28 +211,9 @@ class ULTQ_B2B_Member {
 			return;
 		}
 
-		$data = array(
-			'company' => sanitize_text_field( wp_unslash( $_POST['company'] ?? '' ) ),
-			'tax_id'  => preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['tax_id'] ?? '' ) ) ),
-			'contact' => sanitize_text_field( wp_unslash( $_POST['contact'] ?? '' ) ),
-			'phone'   => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
-			'address' => sanitize_text_field( wp_unslash( $_POST['address'] ?? '' ) ),
-			'note'    => sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) ),
-		);
-
-		$errors = array();
-		if ( '' === $data['company'] ) {
-			$errors[] = '請填寫公司名稱。';
-		}
-		if ( ! ULTQ_Helper::is_valid_tax_id( $data['tax_id'] ) ) {
-			$errors[] = '統一編號格式不正確。';
-		}
-		if ( '' === $data['contact'] ) {
-			$errors[] = '請填寫聯絡人。';
-		}
-		if ( '' === $data['phone'] ) {
-			$errors[] = '請填寫聯絡電話。';
-		}
+		$parsed = ULTQ_Form::validate( 'b2b', wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$data   = $parsed['data'];
+		$errors = $parsed['errors'];
 		if ( $errors ) {
 			foreach ( $errors as $error ) {
 				wc_add_notice( $error, 'error' );
@@ -372,6 +356,7 @@ class ULTQ_B2B_Member {
 		$reason = (string) get_user_meta( $user->ID, self::META_REASON, true );
 		$labels = array( '' => '一般會員（未申請）' ) + self::status_labels();
 		$fields = array(
+			'customer_type' => '採購身分',
 			'company' => '公司名稱',
 			'tax_id'  => '統一編號',
 			'contact' => '聯絡人',
@@ -406,7 +391,13 @@ class ULTQ_B2B_Member {
 				<tr>
 					<th><label for="ultq_b2b_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label></th>
 					<td>
-						<?php if ( 'note' === $key ) : ?>
+						<?php if ( 'customer_type' === $key ) : ?>
+							<select name="ultq_b2b_data[customer_type]" id="ultq_b2b_customer_type">
+								<?php foreach ( ULTQ_Form::types() as $type => $type_label ) : ?>
+									<option value="<?php echo esc_attr( $type ); ?>" <?php selected( $data['customer_type'], $type ); ?>><?php echo esc_html( $type_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						<?php elseif ( 'note' === $key ) : ?>
 							<textarea class="large-text" rows="3" name="ultq_b2b_data[<?php echo esc_attr( $key ); ?>]" id="ultq_b2b_<?php echo esc_attr( $key ); ?>"><?php echo esc_textarea( $data[ $key ] ); ?></textarea>
 						<?php else : ?>
 							<input type="text" class="regular-text" name="ultq_b2b_data[<?php echo esc_attr( $key ); ?>]" id="ultq_b2b_<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $data[ $key ] ); ?>">
@@ -433,6 +424,7 @@ class ULTQ_B2B_Member {
 				$data[ $key ] = 'note' === $key ? sanitize_textarea_field( $raw[ $key ] ) : sanitize_text_field( $raw[ $key ] );
 			}
 		}
+		$data['customer_type'] = ULTQ_Form::customer_type( $data );
 		update_user_meta( $user_id, self::META_DATA, $data );
 
 		$new_status = sanitize_key( wp_unslash( $_POST['ultq_b2b_status'] ?? '' ) );

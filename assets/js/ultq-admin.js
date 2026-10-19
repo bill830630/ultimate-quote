@@ -136,7 +136,7 @@ jQuery( function ( $ ) {
 				}
 				$.each( res.data, function ( key, value ) {
 					var $field = $( '#ultq_c_' + key );
-					if ( value && $field.length && ! $field.val() ) {
+					if ( value && $field.length && ( key === 'customer_type' || ! $field.val() ) ) {
 						$field.val( value ).trigger( 'input' );
 					}
 				} );

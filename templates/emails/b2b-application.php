@@ -18,6 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $cell = 'text-align:left;padding:10px;border:1px solid #e5e5e5;vertical-align:top;';
 $rows = array(
 	'會員帳號' => $user->user_login . '（' . $user->user_email . '）',
+	'採購身分'     => ULTQ_Form::types()[ ULTQ_Form::customer_type( $data ) ],
 	'公司名稱' => $data['company'],
 	'統一編號' => $data['tax_id'],
 	'聯絡人'   => $data['contact'],

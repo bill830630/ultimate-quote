@@ -94,43 +94,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( $can_request ) : ?>
 		<form class="ultq-form" novalidate>
 			<h3 class="ultq-form__title">聯絡資料</h3>
-			<div class="ultq-form__grid">
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-name">聯絡人&nbsp;<abbr class="required" title="必填">*</abbr></label>
-					<input type="text" class="input-text" id="ultq-name" name="name" value="<?php echo esc_attr( $customer['name'] ); ?>" autocomplete="name" required>
-				</p>
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-company">公司名稱</label>
-					<input type="text" class="input-text" id="ultq-company" name="company" value="<?php echo esc_attr( $customer['company'] ); ?>" autocomplete="organization">
-				</p>
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-email">Email&nbsp;<abbr class="required" title="必填">*</abbr></label>
-					<input type="email" class="input-text" id="ultq-email" name="email" value="<?php echo esc_attr( $customer['email'] ); ?>" autocomplete="email" required>
-				</p>
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-phone">聯絡電話&nbsp;<abbr class="required" title="必填">*</abbr></label>
-					<input type="tel" class="input-text" id="ultq-phone" name="phone" value="<?php echo esc_attr( $customer['phone'] ); ?>" autocomplete="tel" required>
-				</p>
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-tax-id">統一編號</label>
-					<input type="text" class="input-text" id="ultq-tax-id" name="tax_id" value="<?php echo esc_attr( $customer['tax_id'] ); ?>" inputmode="numeric" maxlength="8" data-ultq-tax-lookup data-company="#ultq-company" data-address="#ultq-address">
-				</p>
-				<p class="form-row woocommerce-form-row">
-					<label for="ultq-address">地址</label>
-					<input type="text" class="input-text" id="ultq-address" name="address" value="<?php echo esc_attr( $customer['address'] ); ?>" autocomplete="street-address">
-				</p>
-			</div>
-			<p class="form-row woocommerce-form-row">
-				<label for="ultq-message">需求說明</label>
-				<textarea class="input-text" id="ultq-message" name="message" rows="4" placeholder="預計採購時間、交貨地點、其他需求（選填）"></textarea>
-			</p>
+			<?php echo ULTQ_Helper::get_template_html( 'customer-fields.php', array( 'scope' => 'quote', 'data' => $customer ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<?php if ( ULTQ_Files::enabled() ) : ?>
 				<?php $types = ULTQ_Files::allowed_types(); ?>
-				<p class="form-row woocommerce-form-row ultq-form__files">
+				<div class="form-row woocommerce-form-row ultq-form__files ultq-upload">
 					<label for="ultq-files">附件（選填）</label>
-					<input type="file" class="input-text" id="ultq-files" name="ultq_files[]" multiple accept="<?php echo esc_attr( implode( ',', array_map( function ( $ext ) { return '.' . $ext; }, $types ) ) ); ?>" data-max-files="<?php echo (int) ULTQ_Files::max_files(); ?>" data-max-bytes="<?php echo (int) ULTQ_Files::max_bytes(); ?>">
-					<span class="description"><?php echo esc_html( sprintf( '圖面、規格書、照片等，最多 %d 個檔案，單檔 %s 以內。', ULTQ_Files::max_files(), size_format( ULTQ_Files::max_bytes() ) ) ); ?></span>
-				</p>
+					<input type="file" class="ultq-upload__input" id="ultq-files" name="ultq_files[]" multiple accept="<?php echo esc_attr( implode( ',', array_map( function ( $ext ) { return '.' . $ext; }, $types ) ) ); ?>" aria-describedby="ultq-files-hint ultq-files-status ultq-files-error" data-max-files="<?php echo (int) ULTQ_Files::max_files(); ?>" data-max-bytes="<?php echo (int) ULTQ_Files::max_bytes(); ?>">
+					<label class="ultq-upload__dropzone" for="ultq-files">
+						<svg class="ultq-upload__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>
+						<strong>加入圖面、規格書或照片</strong>
+						<span class="ultq-upload__prompt">點選或拖曳檔案至此</span>
+						<small id="ultq-files-hint"><?php echo esc_html( sprintf( '最多 %d 個檔案，單檔 %s 以內；附件將隨詢價一併送出。', ULTQ_Files::max_files(), size_format( ULTQ_Files::max_bytes() ) ) ); ?></small>
+					</label>
+					<div class="ultq-upload__meta">
+						<span id="ultq-files-status" class="ultq-upload__status" role="status">尚未選擇附件</span>
+						<details class="ultq-upload__formats"><summary>查看支援格式</summary><p><?php echo esc_html( strtoupper( implode( '、', $types ) ) ); ?></p></details>
+					</div>
+					<p id="ultq-files-error" class="ultq-upload__error" role="alert" hidden></p>
+					<ul class="ultq-upload__list" aria-label="已選附件" hidden></ul>
+				</div>
 			<?php endif; ?>
 			<div class="ultq-hp" aria-hidden="true">
 				<label for="ultq-website">請勿填寫</label>

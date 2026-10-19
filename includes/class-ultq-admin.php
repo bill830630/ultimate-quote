@@ -395,6 +395,14 @@ class ULTQ_Admin {
 			<br><span class="description">連結會員後，顧客可以在「我的帳戶 → 我的詢價」看到這張報價。選擇會員時會自動帶入空白的聯絡資料。</span>
 		</p>
 		<div class="ultq-customer-grid">
+			<p>
+				<label for="ultq_c_customer_type">採購身分</label>
+				<select id="ultq_c_customer_type" name="ultq_customer[customer_type]" class="widefat">
+					<?php foreach ( ULTQ_Form::types() as $type => $label ) : ?>
+						<option value="<?php echo esc_attr( $type ); ?>" <?php selected( ULTQ_Form::customer_type( $c ), $type ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</p>
 			<?php foreach ( $fields as $key => $label ) : ?>
 				<p>
 					<label for="ultq_c_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
@@ -700,6 +708,9 @@ class ULTQ_Admin {
 			$customer['email'] = sanitize_email( $raw_customer['email'] );
 		}
 		$customer['tax_id'] = preg_replace( '/\D/', '', $customer['tax_id'] );
+		if ( is_string( $raw_customer['customer_type'] ?? null ) && isset( ULTQ_Form::types()[ $raw_customer['customer_type'] ] ) ) {
+			$customer['customer_type'] = $raw_customer['customer_type'];
+		}
 		update_post_meta( $post_id, '_ultq_customer', $customer );
 
 		$user_id = self::posted_user_id();

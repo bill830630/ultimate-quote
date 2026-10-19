@@ -94,29 +94,9 @@ class ULTQ_Ajax {
 		}
 
 		$f        = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification
-		$customer = array(
-			'name'    => sanitize_text_field( $f['name'] ?? '' ),
-			'company' => sanitize_text_field( $f['company'] ?? '' ),
-			'tax_id'  => preg_replace( '/\D/', '', sanitize_text_field( $f['tax_id'] ?? '' ) ),
-			'email'   => sanitize_email( $f['email'] ?? '' ),
-			'phone'   => sanitize_text_field( $f['phone'] ?? '' ),
-			'address' => sanitize_text_field( $f['address'] ?? '' ),
-			'message' => sanitize_textarea_field( $f['message'] ?? '' ),
-		);
-
-		$errors = array();
-		if ( '' === $customer['name'] ) {
-			$errors[] = '請填寫聯絡人姓名。';
-		}
-		if ( ! is_email( $customer['email'] ) ) {
-			$errors[] = '請填寫正確的 Email。';
-		}
-		if ( '' === $customer['phone'] ) {
-			$errors[] = '請填寫聯絡電話。';
-		}
-		if ( '' !== $customer['tax_id'] && ! ULTQ_Helper::is_valid_tax_id( $customer['tax_id'] ) ) {
-			$errors[] = '統一編號格式不正確。';
-		}
+		$parsed   = ULTQ_Form::validate( 'quote', $f );
+		$customer = $parsed['data'];
+		$errors   = $parsed['errors'];
 		$files = ULTQ_Files::enabled() ? ULTQ_Files::from_request( 'ultq_files' ) : array();
 		$valid = ULTQ_Files::validate( $files );
 		if ( is_wp_error( $valid ) ) {
