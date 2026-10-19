@@ -226,22 +226,20 @@
 	flex-direction: column;
 	align-items: center;
 	gap: 0.55em;
+	height: auto;
 	padding: 1.5em 1em;
-	border: 1px dashed var( --ultq-border );
-	border-radius: 8px;
+	/* 外框、背景與圓角由主題原生 .ct-pseudo-input 套用。 */
 	text-align: center;
 	cursor: pointer;
-	transition: border-color 150ms ease, background-color 150ms ease;
 }
 .ultq-upload__dropzone:hover,
 .ultq-upload__dropzone.is-dragging,
 .ultq-upload__dropzone:focus-within {
-	border-color: var( --ultq-accent );
-	background: var( --ultq-box-bg );
+	border-color: var( --theme-form-field-border-focus-color );
+	background-color: var( --has-classic-forms, var( --theme-form-field-background-focus-color ) );
 }
 .ultq-upload__input:focus-visible + .ultq-upload__dropzone {
-	outline: 2px solid var( --ultq-accent );
-	outline-offset: 3px;
+	outline-color: var( --theme-form-field-border-focus-color );
 }
 .ultq-upload__icon {
 	color: var( --ultq-accent );

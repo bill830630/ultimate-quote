@@ -100,7 +100,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<div class="form-row woocommerce-form-row ultq-form__files ultq-upload">
 					<label for="ultq-files">附件（選填）</label>
 					<input type="file" class="ultq-upload__input" id="ultq-files" name="ultq_files[]" multiple accept="<?php echo esc_attr( implode( ',', array_map( function ( $ext ) { return '.' . $ext; }, $types ) ) ); ?>" aria-describedby="ultq-files-hint ultq-files-status ultq-files-error" data-max-files="<?php echo (int) ULTQ_Files::max_files(); ?>" data-max-bytes="<?php echo (int) ULTQ_Files::max_bytes(); ?>">
-					<label class="ultq-upload__dropzone" for="ultq-files">
+					<label class="ultq-upload__dropzone ct-pseudo-input" for="ultq-files">
 						<svg class="ultq-upload__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>
 						<strong>加入圖面、規格書或照片</strong>
 						<span class="ultq-upload__prompt">點選或拖曳檔案至此</span>
