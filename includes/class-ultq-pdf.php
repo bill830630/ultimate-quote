@@ -10,7 +10,7 @@
  * - PDF 都是即時產生，不在主機上留檔；寄 Email 附件時暫存在 uploads/ultq-tmp，寄完即刪
  *
  * 下載入口：
- * - 後台預覽：admin-post.php?action=ultq_pdf&post=ID（nonce＋manage_woocommerce）
+ * - 後台預覽：admin-post.php?action=ultq_pdf&post=ID（nonce＋ultq_manage_quotes）
  * - 顧客：?ultq_pdf=ID&token=xxx（Email 內附連結，免登入）或我的帳戶（登入＋擁有者）
  */
 
@@ -386,7 +386,7 @@ class ULTQ_PDF {
 	public static function handle_admin_preview() {
 		$post_id = absint( $_GET['post'] ?? 0 );
 		check_admin_referer( 'ultq_pdf_' . $post_id );
-		if ( ! current_user_can( 'manage_woocommerce' ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
+		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
 			wp_die( '權限不足。' );
 		}
 		// &rev=N：後台「報價版本」看當初寄出的那一版；沒帶就是預覽下次要寄出的內容

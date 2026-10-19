@@ -40,6 +40,7 @@ class ULTQ_Admin {
 		add_action( 'post_edit_form_tag', array( __CLASS__, 'form_enctype' ) );
 		add_action( 'wp_ajax_ultq_admin_item', array( __CLASS__, 'ajax_item_row' ) );
 		add_action( 'wp_ajax_ultq_admin_customer', array( __CLASS__, 'ajax_customer' ) );
+		add_action( 'wp_ajax_ultq_search_customers', array( __CLASS__, 'search_customers' ) );
 	}
 
 	/** 附件方塊有檔案上傳欄位 */
@@ -83,9 +84,9 @@ class ULTQ_Admin {
 		$new     = (int) ( $counts->{'ultq-new'} ?? 0 ) + (int) ( $counts->{'ultq-accepted'} ?? 0 );
 		$bubble  = $new ? ' <span class="awaiting-mod">' . $new . '</span>' : '';
 
-		add_menu_page( '詢價單', '詢價單' . $bubble, 'manage_woocommerce', self::LIST_SLUG, '', 'dashicons-clipboard', '55.9' );
-		add_submenu_page( self::LIST_SLUG, '所有詢價單', '所有詢價單', 'manage_woocommerce', self::LIST_SLUG );
-		add_submenu_page( self::LIST_SLUG, '新增報價單', '新增報價單', 'manage_woocommerce', self::NEW_SLUG );
+		add_menu_page( '詢價單', '詢價單' . $bubble, ULTQ_Sales::CAPABILITY, self::LIST_SLUG, '', 'dashicons-clipboard', '55.9' );
+		add_submenu_page( self::LIST_SLUG, '所有詢價單', '所有詢價單', ULTQ_Sales::CAPABILITY, self::LIST_SLUG );
+		add_submenu_page( self::LIST_SLUG, '新增報價單', '新增報價單', ULTQ_Sales::CAPABILITY, self::NEW_SLUG );
 
 		$parent = self::settings_parent();
 		add_submenu_page( $parent, '終極詢價設定', self::LIST_SLUG === $parent ? '設定' : '終極詢價', 'manage_woocommerce', ULTQ_Settings::PAGE_SLUG, array( 'ULTQ_Settings', 'render_page' ) );
@@ -377,7 +378,7 @@ class ULTQ_Admin {
 		?>
 		<p class="ultq-customer-member">
 			<label for="ultq_user_id"><strong>會員</strong></label>
-			<select id="ultq_user_id" name="ultq_user_id" class="wc-customer-search" data-placeholder="訪客（不連結會員）" data-allow_clear="true" style="width:320px;">
+			<select id="ultq_user_id" name="ultq_user_id" class="ultq-customer-search" data-placeholder="訪客（不連結會員）" style="width:320px;">
 				<?php if ( $user ) : ?>
 					<option value="<?php echo (int) $user_id; ?>" selected><?php echo esc_html( sprintf( '%s（#%d – %s）', $user->display_name, $user_id, $user->user_email ) ); ?></option>
 				<?php endif; ?>
@@ -637,7 +638,7 @@ class ULTQ_Admin {
 		if ( ! isset( $_POST['_ultq_quote_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_ultq_quote_nonce'] ), 'ultq_save_quote' ) ) {
 			return false;
 		}
-		return current_user_can( 'manage_woocommerce' );
+		return current_user_can( ULTQ_Sales::CAPABILITY );
 	}
 
 	/** 狀態下拉選單取代 WordPress 的發佈方塊，狀態在寫入資料庫前套用 */
@@ -869,9 +870,29 @@ class ULTQ_Admin {
 	}
 
 	// ─── 後台開單 AJAX ─────────────────────────────────────────────────────
+	/** 僅供詢價開單使用；不需要給業務 edit_shop_orders 或使用者管理權限。 */
+	public static function search_customers() {
+		self::verify_ajax();
+		$term = sanitize_text_field( wp_unslash( $_GET['term'] ?? '' ) );
+		if ( '' === $term ) {
+			wp_send_json( array() );
+		}
+		$args = array( 'number' => 30, 'orderby' => 'display_name' );
+		if ( ctype_digit( $term ) ) {
+			$args['include'] = array( absint( $term ) );
+		} else {
+			$args['search'] = '*' . $term . '*';
+			$args['search_columns'] = array( 'user_login', 'user_email', 'display_name' );
+		}
+		$results = array();
+		foreach ( get_users( $args ) as $user ) {
+			$results[ $user->ID ] = sprintf( '%s (#%d – %s)', $user->display_name, $user->ID, $user->user_email );
+		}
+		wp_send_json( $results );
+	}
 
 	private static function verify_ajax() {
-		if ( ! check_ajax_referer( 'ultq_admin', 'nonce', false ) || ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! check_ajax_referer( 'ultq_admin', 'nonce', false ) || ! current_user_can( ULTQ_Sales::CAPABILITY ) ) {
 			wp_send_json_error( array( 'message' => '權限不足或頁面已過期。' ), 403 );
 		}
 	}

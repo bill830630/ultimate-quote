@@ -2,8 +2,8 @@
 /**
  * B2B 會員：我的帳戶申請頁籤、審核狀態、後台使用者列表審核
  *
- * 判斷依據是 user meta ultq_b2b_status（pending/approved/rejected），角色 ultq_b2b 只是
- * 跟著狀態加／移除的標記（方便後台依角色篩選），不靠角色判斷權限。
+ * B2B 是會員資格，僅依 user meta ultq_b2b_status（pending/approved/rejected）判斷；
+ * 與 WordPress 使用者角色分開，審核不增減帳號角色。
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,7 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ULTQ_B2B_Member {
 
-	const ROLE         = 'ultq_b2b';
 	const ENDPOINT     = 'b2b-member';
 	const META_STATUS  = 'ultq_b2b_status';
 	const META_DATA    = 'ultq_b2b_data';
@@ -32,7 +31,6 @@ class ULTQ_B2B_Member {
 		add_action( 'edit_user_profile', array( __CLASS__, 'render_profile_section' ) );
 		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_profile_section' ) );
 		add_action( 'personal_options_update', array( __CLASS__, 'save_profile_section' ) );
-		add_action( 'set_user_role', array( __CLASS__, 'keep_role' ) );
 
 		if ( ! ULTQ_Settings::get( 'b2b_enabled', 1 ) ) {
 			return;
@@ -72,20 +70,6 @@ class ULTQ_B2B_Member {
 		return self::$approved_cache[ $user_id ];
 	}
 
-	/**
-	 * 後台個人資料頁存檔時 WordPress 會用「角色」下拉選單 set_role()，把其他角色（含 ultq_b2b）
-	 * 全部洗掉；已核准的會員在這裡補回標記角色
-	 */
-	public static function keep_role( $user_id ) {
-		if ( 'approved' !== self::get_status( $user_id ) ) {
-			return;
-		}
-		$user = get_userdata( $user_id );
-		if ( $user && ! in_array( self::ROLE, (array) $user->roles, true ) ) {
-			$user->add_role( self::ROLE );
-		}
-	}
-
 	public static function get_data( $user_id ) {
 		$data = get_user_meta( $user_id, self::META_DATA, true );
 		$data = array_merge(
@@ -104,7 +88,6 @@ class ULTQ_B2B_Member {
 		update_user_meta( $user_id, self::META_STATUS, 'approved' );
 		unset( self::$approved_cache[ $user_id ] );
 		delete_user_meta( $user_id, self::META_REASON );
-		$user->add_role( self::ROLE );
 		do_action( 'ultq_b2b_status_changed', $user_id, 'approved' );
 	}
 
@@ -116,7 +99,6 @@ class ULTQ_B2B_Member {
 		update_user_meta( $user_id, self::META_STATUS, 'rejected' );
 		unset( self::$approved_cache[ $user_id ] );
 		update_user_meta( $user_id, self::META_REASON, $reason );
-		$user->remove_role( self::ROLE );
 		do_action( 'ultq_b2b_status_changed', $user_id, 'rejected' );
 	}
 
@@ -128,7 +110,6 @@ class ULTQ_B2B_Member {
 		}
 		delete_user_meta( $user_id, self::META_STATUS );
 		unset( self::$approved_cache[ $user_id ] );
-		$user->remove_role( self::ROLE );
 	}
 
 	public static function count_pending() {
@@ -244,7 +225,7 @@ class ULTQ_B2B_Member {
 	// ─── 後台使用者列表 ─────────────────────────────────────────────────────
 
 	public static function users_column( $columns ) {
-		$columns['ultq_b2b'] = 'B2B';
+		$columns['ultq_b2b'] = 'B2B 資格';
 		return $columns;
 	}
 
@@ -366,7 +347,7 @@ class ULTQ_B2B_Member {
 		);
 		$applied = (int) get_user_meta( $user->ID, self::META_APPLIED, true );
 		?>
-		<h2 id="ultq-b2b">B2B 會員（終極詢價）</h2>
+		<h2 id="ultq-b2b">B2B 資格（終極詢價）</h2>
 		<?php wp_nonce_field( 'ultq_b2b_profile', '_ultq_b2b_profile_nonce' ); ?>
 		<table class="form-table" role="presentation">
 			<tr>
@@ -448,7 +429,6 @@ class ULTQ_B2B_Member {
 			case 'pending':
 				update_user_meta( $user_id, self::META_STATUS, 'pending' );
 				unset( self::$approved_cache[ $user_id ] );
-				get_userdata( $user_id )->remove_role( self::ROLE );
 				break;
 			default:
 				self::revoke( $user_id );

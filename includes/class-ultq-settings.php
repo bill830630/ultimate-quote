@@ -50,7 +50,6 @@ class ULTQ_Settings {
 				'b2b_only_text'     => array( 'type' => 'textarea', 'label' => '非 B2B 會員看到的說明', 'desc' => '訪客與一般會員在詢價商品頁、詢價清單頁看到的文字，下方會依身分顯示「登入」或「申請 B2B 會員」按鈕。', 'default' => '此商品為 B2B 會員專屬，成為 B2B 會員後即可查看批發價格並線上詢價。' ),
 				'button_text'       => array( 'type' => 'text', 'label' => '詢價按鈕文字', 'default' => '加入詢價清單' ),
 				'list_page_id'      => array( 'type' => 'page', 'label' => '詢價清單頁面', 'desc' => '頁面內容需包含短代碼 <code>[ultq_quote_list]</code>。', 'default' => 0 ),
-				'quote_form_fields' => array( 'type' => 'customer_fields', 'scope' => 'quote', 'label' => '詢價表單採購身分與資料', 'desc' => '顧客選擇個人採購或公司行號後，依下表顯示欄位。Email 未填時不寄確認信，後台寄出報價前仍須補上 Email。', 'default' => ULTQ_Form::defaults( 'quote' ) ),
 				'float_position'    => array( 'type' => 'select', 'label' => '浮動詢價清單按鈕', 'options' => array( 'left' => '左下角', 'right' => '右下角', 'off' => '不顯示' ), 'desc' => '清單內有商品時才會出現。有開「終極登入」的懸浮 LINE 按鈕時，會疊在 LINE 按鈕上方（位置跟著 LINE 按鈕）。', 'default' => 'left' ),
 				'show_loop_badge'   => array( 'type' => 'checkbox', 'label' => '商品列表顯示「詢價」徽章', 'desc' => '僅限詢價的商品在商品列表縮圖上顯示徽章。', 'default' => 1 ),
 				'line_oa_id'        => array( 'type' => 'text', 'label' => 'LINE 官方帳號 ID', 'desc' => '填了才會在商品頁顯示「用 LINE 詢問」按鈕，例如 <code>@123abcde</code>（LINE Official Account Manager 帳號名稱下方的 ID，含 @）。', 'default' => '' ),
@@ -65,7 +64,7 @@ class ULTQ_Settings {
 			),
 			'b2b'     => array(
 				'b2b_enabled'        => array( 'type' => 'checkbox', 'label' => '開放 B2B 會員申請', 'desc' => '在「我的帳戶」顯示「B2B 會員」申請頁籤。', 'default' => 1 ),
-				'b2b_form_fields'    => array( 'type' => 'customer_fields', 'scope' => 'b2b', 'label' => '申請表單採購身分與資料', 'desc' => '顧客申請 B2B 會員時先選採購身分，再依設定填資料。Email 使用已登入會員的信箱，不需重填。', 'default' => ULTQ_Form::defaults( 'b2b' ) ),
+				'customer_types'     => array( 'type' => 'customer_types', 'label' => '開放採購身分', 'desc' => '同時套用於 B2B 會員申請與詢價表單。只開放一種時會自動帶入；全部取消時暫停受理新的申請與詢價，既有資料仍可查看及管理。', 'default' => array( 'personal', 'company' ) ),
 				'b2b_auto_approve'   => array( 'type' => 'checkbox', 'label' => '自動核准', 'desc' => '送出申請即成為 B2B 會員，不需人工審核。', 'default' => 0 ),
 				'b2b_price_fallback' => array( 'type' => 'select', 'label' => '商品沒設 B2B 價時，B2B 會員看到', 'options' => array( 'regular' => '一般售價', 'hidden' => '隱藏價格文字' ), 'default' => 'regular' ),
 				'b2b_discount'       => array( 'type' => 'number', 'label' => '全站預設 B2B 折扣（%）', 'desc' => '商品沒設 B2B 價時，以一般售價打這個折扣當 B2B 參考價；0 表示不套用。例如填 10 代表九折。', 'default' => 0, 'min' => 0, 'max' => 100, 'step' => '0.1' ),
@@ -185,8 +184,8 @@ class ULTQ_Settings {
 				case 'checkbox':
 					$saved[ $key ] = empty( $raw ) ? 0 : 1;
 					break;
-				case 'customer_fields':
-					$saved[ $key ] = ULTQ_Form::sanitize_rules( $field['scope'], $raw );
+				case 'customer_types':
+					$saved[ $key ] = is_array( $raw ) ? array_values( array_intersect( array_keys( ULTQ_Form::types() ), array_filter( $raw, 'is_string' ) ) ) : array();
 					break;
 				case 'quote_scope':
 					$saved[ $key ] = '1' === (string) $raw ? 1 : 0;
@@ -361,25 +360,11 @@ class ULTQ_Settings {
 		$value = self::get( $key );
 
 		switch ( $field['type'] ) {
-			case 'customer_fields':
-				$rules = ULTQ_Form::rules( $field['scope'] );
-				echo '<table class="widefat striped"><thead><tr><th>資料欄位</th>';
-				foreach ( ULTQ_Form::types() as $label ) {
-					echo '<th>' . esc_html( $label ) . '</th>';
+			case 'customer_types':
+				printf( '<input type="hidden" name="%s[]" value="">', esc_attr( $name ) );
+				foreach ( ULTQ_Form::types() as $type => $label ) {
+					printf( '<label><input type="checkbox" name="%s[]" value="%s" %s> %s</label><br>', esc_attr( $name ), esc_attr( $type ), checked( in_array( $type, (array) $value, true ), true, false ), esc_html( $label ) );
 				}
-				echo '</tr></thead><tbody>';
-				foreach ( ULTQ_Form::fields( $field['scope'] ) as $field_key => $definition ) {
-					echo '<tr><th scope="row">' . esc_html( $definition['label'] ) . '</th>';
-					foreach ( ULTQ_Form::types() as $type => $label ) {
-						printf( '<td><select name="%s[%s][%s]" aria-label="%s">', esc_attr( $name ), esc_attr( $type ), esc_attr( $field_key ), esc_attr( $label . '：' . $definition['label'] ) );
-						foreach ( array( 'hidden' => '不顯示', 'optional' => '選填', 'required' => '必填' ) as $mode => $mode_label ) {
-							printf( '<option value="%s" %s>%s</option>', esc_attr( $mode ), selected( $rules[ $type ][ $field_key ], $mode, false ), esc_html( $mode_label ) );
-						}
-						echo '</select></td>';
-					}
-					echo '</tr>';
-				}
-				echo '</tbody></table>';
 				break;
 
 			case 'checkbox':

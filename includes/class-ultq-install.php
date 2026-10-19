@@ -1,6 +1,6 @@
 <?php
 /**
- * 啟用／升級：B2B 角色、詢價清單頁、暫存目錄、rewrite endpoint
+ * 啟用／升級：業務角色、舊 B2B 角色遷移、詢價清單頁、暫存目錄、rewrite endpoint
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -9,10 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ULTQ_Install {
 
+	const LEGACY_B2B_ROLE = 'ultq_b2b';
+
 	const DB_VERSION_KEY = 'ultq_db_version';
 
 	public static function activate() {
 		self::add_role();
+		self::migrate_b2b_role();
 		self::maybe_create_list_page();
 		self::ensure_private_dir( ULTQ_Helper::tmp_dir() );
 		self::ensure_private_dir( ULTQ_Helper::font_dir() );
@@ -25,6 +28,7 @@ class ULTQ_Install {
 	public static function maybe_upgrade() {
 		if ( get_option( self::DB_VERSION_KEY ) !== ULTQ_VERSION ) {
 			self::add_role();
+			self::migrate_b2b_role();
 			update_option( self::DB_VERSION_KEY, ULTQ_VERSION );
 			update_option( 'ultq_flush_rewrite', 1 );
 		}
@@ -37,14 +41,44 @@ class ULTQ_Install {
 		}, 99 );
 	}
 
-	/**
-	 * B2B 角色只當「標記」用，權限跟一般 read 一樣；真正的判斷依據是 user meta
-	 * ultq_b2b_status（見 ULTQ_B2B_Member::is_approved()），角色是給後台使用者列表篩選用的
-	 */
+	/** 註冊業務角色，並保留既有商店管理者的詢價管理權限。 */
 	private static function add_role() {
-		if ( ! get_role( ULTQ_B2B_Member::ROLE ) ) {
-			add_role( ULTQ_B2B_Member::ROLE, 'B2B 會員', array( 'read' => true ) );
+		if ( ! get_role( ULTQ_Sales::ROLE ) ) {
+			add_role( ULTQ_Sales::ROLE, '業務', array(
+				'read' => true,
+				'view_admin_dashboard' => true,
+				ULTQ_Sales::CAPABILITY => true,
+			) );
 		}
+		// 既有管理員／商店管理員保留詢價權限，業務則只有獨立的詢價權限。
+		foreach ( wp_roles()->role_objects as $role ) {
+			if ( $role->has_cap( 'manage_woocommerce' ) || ULTQ_Sales::ROLE === $role->name ) {
+				$role->add_cap( ULTQ_Sales::CAPABILITY );
+			}
+		}
+	}
+
+	/**
+	 * 只移除舊角色標記，不改動任何 B2B 狀態／申請資料，也不觸發審核通知。
+	 * 只有舊 B2B 角色的帳號補上一般顧客角色，其餘角色與個別權限全部保留。
+	 */
+	public static function migrate_b2b_role() {
+		$migrated = 0;
+		do {
+			$ids = get_users( array( 'role' => self::LEGACY_B2B_ROLE, 'number' => 200, 'fields' => 'ID', 'cache_results' => false ) );
+			foreach ( $ids as $id ) {
+				$user = get_userdata( $id );
+				// remove_cap 也能清理角色定義已被刪除、但帳號上仍殘留的標記。
+				$user->remove_cap( self::LEGACY_B2B_ROLE );
+				if ( ! $user->roles ) {
+					$user->add_role( get_role( 'customer' ) ? 'customer' : 'subscriber' );
+				}
+				clean_user_cache( $id );
+				++$migrated;
+			}
+		} while ( $ids );
+		remove_role( self::LEGACY_B2B_ROLE );
+		return $migrated;
 	}
 
 	private static function maybe_create_list_page() {

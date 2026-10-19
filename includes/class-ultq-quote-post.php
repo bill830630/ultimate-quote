@@ -69,7 +69,7 @@ class ULTQ_Quote_Post {
 	}
 
 	public static function register() {
-		$cap = 'manage_woocommerce';
+		$cap = ULTQ_Sales::CAPABILITY;
 		register_post_type( self::POST_TYPE, array(
 			'labels'          => array(
 				'name'               => '詢價單',
@@ -99,6 +99,11 @@ class ULTQ_Quote_Post {
 				'delete_posts'       => $cap,
 				'publish_posts'      => $cap,
 				'read_private_posts' => $cap,
+				'edit_private_posts' => $cap,
+				'edit_published_posts' => $cap,
+				'delete_others_posts' => $cap,
+				'delete_private_posts' => $cap,
+				'delete_published_posts' => $cap,
 				// 電話、LINE、Email 來的詢價由業務在後台直接開單（ULTQ_Admin 處理新單的單號與預設值）
 				'create_posts'       => $cap,
 			),

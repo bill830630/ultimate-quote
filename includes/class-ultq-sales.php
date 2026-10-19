@@ -2,7 +2,7 @@
 /**
  * 業務窗口：每張詢價單指派一位負責業務（_ultq_owner），報價單印業務姓名／電話，通知只找負責的人
  *
- * - 業務名單 = 有 manage_woocommerce 權限的使用者（filter ultq_sales_users 可改）
+ * - 業務名單 = 有 ultq_manage_quotes 或 manage_woocommerce 權限的使用者（filter ultq_sales_users 可改）
  * - 業務自己的「報價單上顯示的姓名／電話」存在 user meta ultq_sales_name／ultq_sales_phone，Email 用帳號 Email
  * - 顧客可以設定專屬業務（user meta ultq_sales_rep，B2B 經銷商常見），新詢價優先指派給他
  * - 其餘依設定 sales_assign：不自動指派／輪流分配（sales_team 名單，輪到誰記在 option ultq_sales_rr）／固定一位
@@ -14,6 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class ULTQ_Sales {
+
+	const ROLE       = 'ultq_sales';
+	const CAPABILITY = 'ultq_manage_quotes';
 
 	const META_OWNER = '_ultq_owner';
 	const META_REP   = 'ultq_sales_rep';
@@ -40,7 +43,7 @@ class ULTQ_Sales {
 		static $users = null;
 		if ( null === $users ) {
 			$users = array();
-			foreach ( get_users( array( 'capability' => 'manage_woocommerce', 'orderby' => 'display_name', 'fields' => array( 'ID', 'display_name' ) ) ) as $user ) {
+			foreach ( get_users( array( 'capability__in' => array( 'manage_woocommerce', self::CAPABILITY ), 'orderby' => 'display_name', 'fields' => array( 'ID', 'display_name' ) ) ) as $user ) {
 				$users[ (int) $user->ID ] = $user->display_name;
 			}
 			$users = (array) apply_filters( 'ultq_sales_users', $users );
@@ -226,11 +229,11 @@ class ULTQ_Sales {
 
 	/** 業務本人：報價單上的姓名／電話；顧客：專屬業務 */
 	public static function render_profile( $user ) {
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( self::CAPABILITY ) || ( ! current_user_can( 'manage_woocommerce' ) && get_current_user_id() !== (int) $user->ID ) ) {
 			return;
 		}
 		wp_nonce_field( 'ultq_sales_profile', '_ultq_sales_nonce' );
-		if ( user_can( $user, 'manage_woocommerce' ) ) {
+		if ( user_can( $user, self::CAPABILITY ) ) {
 			?>
 			<h2 id="ultq-sales">業務資料（終極詢價）</h2>
 			<table class="form-table" role="presentation">
@@ -267,10 +270,13 @@ class ULTQ_Sales {
 	}
 
 	public static function save_profile( $user_id ) {
-		if ( ! current_user_can( 'manage_woocommerce' ) || ! isset( $_POST['_ultq_sales_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_ultq_sales_nonce'] ), 'ultq_sales_profile' ) ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) && get_current_user_id() !== (int) $user_id ) {
 			return;
 		}
-		if ( user_can( $user_id, 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( self::CAPABILITY ) || ! isset( $_POST['_ultq_sales_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_ultq_sales_nonce'] ), 'ultq_sales_profile' ) ) {
+			return;
+		}
+		if ( user_can( $user_id, self::CAPABILITY ) ) {
 			foreach ( array( 'ultq_sales_name' => self::META_NAME, 'ultq_sales_phone' => self::META_PHONE ) as $field => $meta ) {
 				$value = sanitize_text_field( wp_unslash( $_POST[ $field ] ?? '' ) );
 				if ( '' === $value ) {

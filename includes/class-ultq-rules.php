@@ -57,13 +57,13 @@ class ULTQ_Rules {
 		return self::$cache[ $id ];
 	}
 
-	/** 已核准的 B2B 會員；管理員與商店管理員（manage_woocommerce）也算，方便直接在前台測試詢價 */
+	/** 已核准的 B2B 會員；具詢價管理權限的管理員、商店管理員與業務也可在前台預覽詢價 */
 	public static function is_b2b( $user_id = null ) {
 		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
 		if ( ! $user_id ) {
 			return false;
 		}
-		return ULTQ_B2B_Member::is_approved( $user_id ) || user_can( $user_id, 'manage_woocommerce' );
+		return ULTQ_B2B_Member::is_approved( $user_id ) || user_can( $user_id, ULTQ_Sales::CAPABILITY );
 	}
 
 	/** 這個商品是不是詢價商品（不能加入購物車、隱藏一般售價）；能不能詢價另外看 can_request_quote() */

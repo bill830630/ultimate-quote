@@ -20,6 +20,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div class="ultq-list ultq-list--gate"><?php echo $gate; // phpcs:ignore WordPress.Security.EscapeOutput -- ULTQ_Frontend::b2b_gate_html() 已跳脫 ?></div>
 	<?php return; ?>
 <?php endif; ?>
+<?php if ( ! ULTQ_Form::enabled_types() ) : ?>
+	<p class="woocommerce-info">目前暫停受理新的詢價，既有詢價可在「我的詢價」查看。</p>
+	<?php return; ?>
+<?php endif; ?>
 <?php if ( ! $items ) : ?>
 	<div class="ultq-list ultq-list--empty">
 		<p class="woocommerce-info">您的詢價清單目前是空的。</p>

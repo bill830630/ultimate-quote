@@ -4,7 +4,7 @@
  *
  * - 存放：uploads/ultq-files/{詢價單 ID}/{隨機名}.bin（目錄有 .htaccess／index.php；檔名隨機且不保留副檔名，
  *   即使主機是 nginx 不吃 .htaccess，也猜不到網址、不會被當成程式執行）
- * - 下載一律走 admin-post.php?action=ultq_file（manage_woocommerce＋nonce），用原始檔名送出
+ * - 下載一律走 admin-post.php?action=ultq_file（ultq_manage_quotes＋nonce），用原始檔名送出
  * - meta _ultq_files：array( array( id, name, file, size, by=customer|admin, time ) )
  * - 詢價單永久刪除時一併刪檔
  */
@@ -176,7 +176,7 @@ class ULTQ_Files {
 	private static function request_target( $nonce_action ) {
 		$post_id = absint( $_GET['post'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
 		check_admin_referer( $nonce_action . $post_id );
-		if ( ! current_user_can( 'manage_woocommerce' ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
+		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
 			wp_die( '權限不足。' );
 		}
 		$file = self::find( $post_id, sanitize_key( wp_unslash( $_GET['file'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification

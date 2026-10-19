@@ -3,6 +3,27 @@
  */
 jQuery( function ( $ ) {
 	var cfg = window.ultqAdmin || {};
+	// 詢價專用會員搜尋，業務不用取得 WooCommerce 訂單管理權限。
+	if ( $.fn.selectWoo ) {
+		$( '.ultq-customer-search' ).each( function () {
+			var $select = $( this );
+			$select.prepend( '<option value=""></option>' );
+			$select.selectWoo( {
+				allowClear: true,
+				placeholder: $select.data( 'placeholder' ),
+				minimumInputLength: 1,
+				ajax: {
+					url: cfg.ajaxUrl,
+					dataType: 'json',
+					delay: 300,
+					data: function ( params ) { return { action: 'ultq_search_customers', nonce: cfg.nonce, term: params.term }; },
+					processResults: function ( result ) {
+						return { results: $.map( result, function ( text, id ) { return { id: id, text: text }; } ) };
+					}
+				}
+			} );
+		} );
+	}
 
 	// ─── 詢價單編輯頁 ─────────────────────────────────────────────────────
 

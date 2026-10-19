@@ -26,6 +26,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 	<?php $show_summary = true; ?>
 <?php else : ?>
+	<?php if ( ! ULTQ_Form::enabled_types() ) : ?>
+		<p class="woocommerce-info">目前暫停受理新的 B2B 會員申請。</p>
+		<?php return; ?>
+	<?php endif; ?>
 	<?php $show_summary = false; ?>
 	<?php if ( 'rejected' === $status ) : ?>
 		<div class="ultq-box ultq-box--muted">

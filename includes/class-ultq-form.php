@@ -40,21 +40,15 @@ class ULTQ_Form {
 		return $rules;
 	}
 
-	public static function sanitize_rules( $scope, $raw ) {
-		$rules = self::defaults( $scope );
-		foreach ( $rules as $type => $fields ) {
-			foreach ( $fields as $key => $default ) {
-				$value = is_array( $raw ) && is_array( $raw[ $type ] ?? null ) ? ( $raw[ $type ][ $key ] ?? null ) : null;
-				if ( in_array( $value, array( 'hidden', 'optional', 'required' ), true ) ) {
-					$rules[ $type ][ $key ] = $value;
-				}
-			}
-		}
-		return $rules;
+	/** 欄位固定依採購身分套用；舊版逐欄設定不再使用。 */
+	public static function rules( $scope ) {
+		return self::defaults( $scope );
 	}
 
-	public static function rules( $scope ) {
-		return self::sanitize_rules( $scope, ULTQ_Settings::get( $scope . '_form_fields', array() ) );
+	public static function enabled_types() {
+		$saved = ULTQ_Settings::get( 'customer_types', array( 'personal', 'company' ) );
+		$keys = is_array( $saved ) ? array_filter( $saved, 'is_string' ) : array();
+		return array_intersect_key( self::types(), array_flip( $keys ) );
 	}
 
 	/** 舊資料沒有戶別時，依已填公司名稱／統編推定，不改寫舊資料。 */
@@ -70,8 +64,8 @@ class ULTQ_Form {
 	public static function validate( $scope, array $raw ) {
 		$type   = is_string( $raw['customer_type'] ?? null ) ? $raw['customer_type'] : '';
 		$errors = array();
-		if ( ! isset( self::types()[ $type ] ) ) {
-			$errors[] = '請選擇您的採購身分。';
+		if ( ! isset( self::enabled_types()[ $type ] ) ) {
+			$errors[] = self::enabled_types() ? '請選擇目前開放的採購身分。' : '目前暫停受理新的會員申請與詢價。';
 		}
 		$rules = self::rules( $scope )[ $type ] ?? array();
 		$data  = array( 'customer_type' => $type );

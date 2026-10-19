@@ -4,14 +4,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 $rules = ULTQ_Form::rules( $scope );
+$types = ULTQ_Form::enabled_types();
+if ( ! $types ) { return; }
 $type  = ULTQ_Form::customer_type( $data );
+if ( ! isset( $types[ $type ] ) ) { $type = array_key_first( $types ); }
 $prefix = 'ultq-' . $scope . '-';
 ?>
 <div class="ultq-customer-fields" data-rules="<?php echo esc_attr( wp_json_encode( $rules ) ); ?>">
+	<?php if ( count( $types ) > 1 ) : ?>
 	<fieldset class="ultq-customer-type">
 		<legend>採購身分&nbsp;<abbr class="required" title="必填">*</abbr></legend>
 		<div class="ultq-customer-type__options">
-			<?php foreach ( ULTQ_Form::types() as $value => $label ) : ?>
+			<?php foreach ( $types as $value => $label ) : ?>
 				<label class="ultq-customer-type__option">
 					<input type="radio" name="customer_type" value="<?php echo esc_attr( $value ); ?>" <?php checked( $type, $value ); ?> required>
 					<span class="ultq-customer-type__content">
@@ -22,6 +26,10 @@ $prefix = 'ultq-' . $scope . '-';
 			<?php endforeach; ?>
 		</div>
 	</fieldset>
+	<?php else : ?>
+		<input type="hidden" name="customer_type" value="<?php echo esc_attr( $type ); ?>">
+		<p class="ultq-customer-type">採購身分：<strong><?php echo esc_html( $types[ $type ] ); ?></strong></p>
+	<?php endif; ?>
 	<div class="ultq-form__grid">
 		<?php foreach ( ULTQ_Form::fields( $scope ) as $key => $field ) : ?>
 			<?php

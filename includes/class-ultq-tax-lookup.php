@@ -111,7 +111,7 @@ class ULTQ_Tax_Lookup {
 		if ( ! self::enabled() ) {
 			wp_send_json_error( array( 'message' => '' ) );
 		}
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) ) {
 			$key  = 'ultq_tax_rl_' . md5( (string) WC_Geolocation::get_ip_address() );
 			$hits = (int) get_transient( $key );
 			if ( $hits >= 30 ) {
