@@ -3,6 +3,26 @@
  */
 jQuery( function ( $ ) {
 	var cfg = window.ultqAdmin || {};
+	// 批次指派跟隨各組原生批次操作；不使用時隱藏，避免與業務篩選混淆。
+	$( '.ultq-bulk-owner' ).each( function () {
+		var $owner = $( this );
+		var position = $owner.data( 'position' );
+		var $action = $( '#bulk-action-selector-' + position );
+		$owner.insertBefore( $action.siblings( '.button.action' ) );
+		var toggleOwner = function () {
+			var active = $action.val() === 'ultq_assign';
+			$owner.toggle( active ).find( 'select' ).prop( 'disabled', ! active );
+		};
+		$action.on( 'change', function () {
+			$( '#bulk-action-selector-top, #bulk-action-selector-bottom' ).val( $action.val() );
+			$( '.ultq-bulk-owner' ).toggle( $action.val() === 'ultq_assign' )
+				.find( 'select' ).prop( 'disabled', $action.val() !== 'ultq_assign' );
+		} );
+		$owner.find( 'select' ).on( 'change', function () {
+			$( '.ultq-bulk-owner select' ).val( $( this ).val() );
+		} );
+		toggleOwner();
+	} );
 	// 詢價專用會員搜尋，業務不用取得 WooCommerce 訂單管理權限。
 	if ( $.fn.selectWoo ) {
 		$( '.ultq-customer-search' ).each( function () {
