@@ -176,8 +176,8 @@ class ULTQ_Files {
 	private static function request_target( $nonce_action ) {
 		$post_id = absint( $_GET['post'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification
 		check_admin_referer( $nonce_action . $post_id );
-		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
-			wp_die( '權限不足。' );
+		if ( ! ULTQ_Sales::can_manage_quote( $post_id ) ) {
+			wp_die( '權限不足。', '', array( 'response' => 403 ) );
 		}
 		$file = self::find( $post_id, sanitize_key( wp_unslash( $_GET['file'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $file ) {

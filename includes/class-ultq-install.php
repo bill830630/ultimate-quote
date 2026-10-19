@@ -50,6 +50,9 @@ class ULTQ_Install {
 				ULTQ_Sales::CAPABILITY => true,
 			) );
 		}
+		// 升級也補齊既有業務角色的後台入口權限，避免舊帳號被 WooCommerce 導回前台。
+		get_role( ULTQ_Sales::ROLE )->add_cap( 'read' );
+		get_role( ULTQ_Sales::ROLE )->add_cap( 'view_admin_dashboard' );
 		// 既有管理員／商店管理員保留詢價權限，業務則只有獨立的詢價權限。
 		foreach ( wp_roles()->role_objects as $role ) {
 			if ( $role->has_cap( 'manage_woocommerce' ) || ULTQ_Sales::ROLE === $role->name ) {

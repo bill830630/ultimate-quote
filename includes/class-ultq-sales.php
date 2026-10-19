@@ -29,6 +29,17 @@ class ULTQ_Sales {
 		add_action( "manage_{$type}_posts_custom_column", array( __CLASS__, 'column_value' ), 10, 2 );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'filter_dropdown' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'filter_query' ) );
+		add_filter( 'map_meta_cap', array( __CLASS__, 'map_quote_capabilities' ), 20, 4 );
+		add_filter( 'wp_count_posts', array( __CLASS__, 'filter_counts' ), 10, 3 );
+		add_filter( 'views_edit-' . $type, array( __CLASS__, 'filter_views' ) );
+		add_action( 'wp_after_insert_post', array( __CLASS__, 'assign_new_draft' ), 10, 3 );
+		add_filter( 'woocommerce_login_redirect', array( __CLASS__, 'login_redirect' ), 99, 2 );
+		add_filter( 'login_redirect', array( __CLASS__, 'wp_login_redirect' ), 99, 3 );
+		add_filter( 'woocommerce_prevent_admin_access', array( __CLASS__, 'prevent_admin_access' ), 99 );
+		add_filter( 'show_admin_bar', array( __CLASS__, 'show_admin_bar' ), 99 );
+		add_action( 'template_redirect', array( __CLASS__, 'redirect_account_dashboard' ), 20 );
+		add_filter( 'woocommerce_account_menu_items', array( __CLASS__, 'account_menu' ), 30 );
+		add_filter( 'woocommerce_get_endpoint_url', array( __CLASS__, 'account_endpoint_url' ), 10, 2 );
 
 		add_action( 'show_user_profile', array( __CLASS__, 'render_profile' ), 20 );
 		add_action( 'edit_user_profile', array( __CLASS__, 'render_profile' ), 20 );
@@ -37,6 +48,113 @@ class ULTQ_Sales {
 	}
 
 	// ─── 名單 ──────────────────────────────────────────────────────────────
+	public static function dashboard_url() {
+		return admin_url( 'edit.php?post_type=' . ULTQ_Quote_Post::POST_TYPE );
+	}
+
+	public static function login_redirect( $redirect, $user ) {
+		return $user instanceof WP_User && self::is_restricted( $user->ID ) ? self::dashboard_url() : $redirect;
+	}
+
+	public static function wp_login_redirect( $redirect, $requested, $user ) {
+		return self::login_redirect( $redirect, $user );
+	}
+
+	public static function prevent_admin_access( $prevent ) {
+		return current_user_can( self::CAPABILITY ) ? false : $prevent;
+	}
+
+	public static function show_admin_bar( $show ) {
+		return self::is_restricted() ? 'false' !== get_user_option( 'show_admin_bar_front' ) : $show;
+	}
+
+	/** 社群登入直接導回會員首頁時，也要能到達詢價後台；帳號設定等端點仍可使用。 */
+	public static function redirect_account_dashboard() {
+		if ( self::is_restricted() && function_exists( 'is_account_page' ) && is_account_page() && ! is_wc_endpoint_url() ) {
+			wp_safe_redirect( self::dashboard_url() );
+			exit;
+		}
+	}
+
+	public static function account_menu( $items ) {
+		if ( self::is_restricted() ) {
+			$items = array( 'ultq-staff-quotes' => '詢價管理後台' ) + $items;
+		}
+		return $items;
+	}
+
+	public static function account_endpoint_url( $url, $endpoint ) {
+		return 'ultq-staff-quotes' === $endpoint && self::is_restricted() ? self::dashboard_url() : $url;
+	}
+
+	/** 管理員／商店管理員可管理全部，其餘具詢價權限的帳號限本人負責。 */
+	public static function can_manage_all( $user_id = null ) {
+		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
+		return user_can( $user_id, 'manage_woocommerce' ) || user_can( $user_id, 'manage_options' );
+	}
+
+	public static function is_restricted( $user_id = null ) {
+		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
+		return user_can( $user_id, self::CAPABILITY ) && ! self::can_manage_all( $user_id );
+	}
+
+	public static function can_manage_quote( $post_id, $user_id = null ) {
+		$user_id = null === $user_id ? get_current_user_id() : (int) $user_id;
+		return ULTQ_Quote_Post::POST_TYPE === get_post_type( $post_id )
+			&& user_can( $user_id, self::CAPABILITY )
+			&& ( self::can_manage_all( $user_id ) || self::get_owner( $post_id ) === $user_id );
+	}
+
+	/** 同時封鎖直接編輯網址、核心刪除／還原與帶單號的原始 capability 檢查。 */
+	public static function map_quote_capabilities( $caps, $cap, $user_id, $args ) {
+		if ( ! in_array( $cap, array( 'read_post', 'edit_post', 'delete_post', self::CAPABILITY ), true ) || empty( $args[0] ) ) {
+			return $caps;
+		}
+		$post = get_post( (int) $args[0] );
+		if ( $post && 'revision' === $post->post_type ) {
+			$post = get_post( $post->post_parent );
+		}
+		if ( $post && ULTQ_Quote_Post::POST_TYPE === $post->post_type && ! self::can_manage_quote( $post->ID, $user_id ) ) {
+			return array( 'do_not_allow' );
+		}
+		return $caps;
+	}
+
+	/** 新增報價頁建立的暫存單立即歸本人，後續存檔才能通過物件權限。 */
+	public static function assign_new_draft( $post_id, $post, $update ) {
+		if ( ! $update && ULTQ_Quote_Post::POST_TYPE === $post->post_type && 'auto-draft' === $post->post_status
+			&& self::is_restricted() && (int) $post->post_author === get_current_user_id() ) {
+			self::set_owner( $post_id, get_current_user_id(), false );
+		}
+	}
+
+	/** 避免狀態頁籤與選單徽章洩漏其他業務的詢價數量。 */
+	public static function filter_counts( $counts, $type, $perm ) {
+		if ( ULTQ_Quote_Post::POST_TYPE !== $type || ! self::is_restricted() ) {
+			return $counts;
+		}
+		global $wpdb;
+		$own = new stdClass();
+		foreach ( $counts as $status => $count ) {
+			$own->$status = 0;
+		}
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT p.post_status, COUNT(DISTINCT p.ID) AS num FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} m ON m.post_id=p.ID WHERE p.post_type=%s AND m.meta_key=%s AND m.meta_value=%s GROUP BY p.post_status",
+			$type, self::META_OWNER, (string) get_current_user_id()
+		) );
+		foreach ( $rows as $row ) {
+			$own->{$row->post_status} = (int) $row->num;
+		}
+		return $own;
+	}
+
+	public static function filter_views( $views ) {
+		if ( self::is_restricted() ) {
+			// 核心「我的」依文章作者統計，不等於目前負責人，避免顯示已改派的單。
+			unset( $views['mine'] );
+		}
+		return $views;
+	}
 
 	/** @return array user ID => 顯示名稱 */
 	public static function users() {
@@ -201,6 +319,10 @@ class ULTQ_Sales {
 		if ( ULTQ_Quote_Post::POST_TYPE !== $post_type ) {
 			return;
 		}
+		if ( self::is_restricted() ) {
+			echo '<span>指派給我的詢價單</span>';
+			return;
+		}
 		$current = isset( $_GET['ultq_owner'] ) ? sanitize_key( wp_unslash( $_GET['ultq_owner'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		echo '<label class="screen-reader-text" for="ultq-owner-filter">依業務篩選</label><select name="ultq_owner" id="ultq-owner-filter">';
 		printf( '<option value="">%s</option>', esc_html( '所有業務' ) );
@@ -213,16 +335,24 @@ class ULTQ_Sales {
 	}
 
 	public static function filter_query( $query ) {
-		if ( ! is_admin() || ! $query->is_main_query() || ULTQ_Quote_Post::POST_TYPE !== $query->get( 'post_type' ) || empty( $_GET['ultq_owner'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! in_array( ULTQ_Quote_Post::POST_TYPE, (array) $query->get( 'post_type' ), true ) ) {
 			return;
 		}
-		$value = sanitize_key( wp_unslash( $_GET['ultq_owner'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
-		if ( 'none' === $value ) {
-			$meta = array( 'key' => self::META_OWNER, 'compare' => 'NOT EXISTS' );
+		if ( self::is_restricted() ) {
+			$meta = array( 'key' => self::META_OWNER, 'value' => get_current_user_id(), 'compare' => '=' );
+			if ( is_admin() && $query->is_main_query() ) {
+				$query->set( 'author', '' );
+				unset( $_GET['author'], $_REQUEST['author'] );
+			}
+		} elseif ( is_admin() && $query->is_main_query() && ! empty( $_GET['ultq_owner'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$value = sanitize_key( wp_unslash( $_GET['ultq_owner'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$meta = 'none' === $value ? array( 'key' => self::META_OWNER, 'compare' => 'NOT EXISTS' )
+				: array( 'key' => self::META_OWNER, 'value' => 'mine' === $value ? get_current_user_id() : absint( $value ) );
 		} else {
-			$meta = array( 'key' => self::META_OWNER, 'value' => 'mine' === $value ? get_current_user_id() : absint( $value ) );
+			return;
 		}
-		$query->set( 'meta_query', array( $meta ) );
+		$existing = $query->get( 'meta_query' );
+		$query->set( 'meta_query', $existing ? array( 'relation' => 'AND', $existing, $meta ) : array( $meta ) );
 	}
 
 	// ─── 個人資料頁 ─────────────────────────────────────────────────────────

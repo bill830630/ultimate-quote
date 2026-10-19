@@ -38,6 +38,9 @@ class ULTQ_Quote_Response {
 
 	/** 是否可以檢視這張報價：token 正確，或登入且是本人 */
 	public static function can_access( $post_id, $token = '' ) {
+		if ( ULTQ_Sales::is_restricted() && ! ULTQ_Sales::can_manage_quote( $post_id ) ) {
+			return false;
+		}
 		if ( ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
 			return false;
 		}

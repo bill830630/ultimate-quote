@@ -167,7 +167,9 @@ jQuery( function ( $ ) {
 		// 有填正確 Email 才能寄出
 		var $send = $( '.ultq-btn-send' );
 		$( $send.data( 'email-field' ) ).on( 'input change', function () {
-			$send.prop( 'disabled', ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( String( $( this ).val() || '' ).trim() ) );
+			var email = String( $( this ).val() || '' ).trim();
+			$send.prop( 'disabled', ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( email ) );
+			$( '.ultq-recipient-email' ).text( email || '（未填 Email）' );
 		} );
 
 		$send.on( 'click', function ( e ) {

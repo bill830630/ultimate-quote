@@ -85,7 +85,7 @@ class ULTQ_Admin {
 		$bubble  = $new ? ' <span class="awaiting-mod">' . $new . '</span>' : '';
 
 		add_menu_page( '詢價單', '詢價單' . $bubble, ULTQ_Sales::CAPABILITY, self::LIST_SLUG, '', 'dashicons-clipboard', '55.9' );
-		add_submenu_page( self::LIST_SLUG, '所有詢價單', '所有詢價單', ULTQ_Sales::CAPABILITY, self::LIST_SLUG );
+		add_submenu_page( self::LIST_SLUG, ULTQ_Sales::is_restricted() ? '我的詢價單' : '所有詢價單', ULTQ_Sales::is_restricted() ? '我的詢價單' : '所有詢價單', ULTQ_Sales::CAPABILITY, self::LIST_SLUG );
 		add_submenu_page( self::LIST_SLUG, '新增報價單', '新增報價單', ULTQ_Sales::CAPABILITY, self::NEW_SLUG );
 
 		$parent = self::settings_parent();
@@ -258,6 +258,7 @@ class ULTQ_Admin {
 			</p>
 			<p>
 				<label for="ultq_owner"><strong>負責業務</strong></label><br>
+				<?php if ( ULTQ_Sales::can_manage_all() ) : ?>
 				<select name="ultq_owner" id="ultq_owner" class="widefat">
 					<option value="0">— 未指派 —</option>
 					<?php
@@ -272,6 +273,9 @@ class ULTQ_Admin {
 						<option value="<?php echo (int) $id; ?>" <?php selected( $owner, $id ); ?>><?php echo esc_html( $name ); ?></option>
 					<?php endforeach; ?>
 				</select>
+				<?php else : ?>
+					<span><?php echo esc_html( ULTQ_Sales::info( $owner )['name'] ?? '' ); ?></span>
+				<?php endif; ?>
 			</p>
 			<?php if ( $is_new ) : ?>
 				<p class="ultq-actions__meta">電話、LINE、Email 來的詢價可以在這裡直接開單，儲存後產生報價單號。</p>
@@ -309,14 +313,14 @@ class ULTQ_Admin {
 					<a href="<?php echo esc_url( ULTQ_Excel::admin_url( $post->ID ) ); ?>" class="button ultq-btn-preview">下載 Excel</a>
 				</p>
 			<?php endif; ?>
-			<p class="description">預覽的是已儲存的內容，修改後請先儲存。<?php echo $sent_at ? esc_html( sprintf( '再寄出就會是第 %d 版。', ULTQ_Quote_Post::revision( $post->ID ) + 1 ) ) : ''; ?></p>
+			<p class="description ultq-actions__hint">預覽與下載使用已儲存的內容，修改後請先儲存。<?php echo $sent_at ? esc_html( sprintf( '再寄出就會是第 %d 版。', ULTQ_Quote_Post::revision( $post->ID ) + 1 ) ) : ''; ?></p>
 			<div class="ultq-actions__buttons">
 				<button type="submit" name="save" value="1" class="button button-large">儲存</button>
 				<button type="submit" name="ultq_send_quote" value="1" class="button button-primary button-large ultq-btn-send" <?php disabled( ! is_email( $customer['email'] ) ); ?> data-email-field="#ultq_c_email">
 					<?php echo $sent_at ? '儲存並重新寄出' : '儲存並寄出報價'; ?>
 				</button>
 			</div>
-			<p class="description">寄出時會把報價單 PDF 附在 Email 寄給 <?php echo esc_html( $customer['email'] ?: '（未填 Email）' ); ?>，並把狀態改為「已報價」。</p>
+			<p class="description ultq-actions__recipient">報價單 PDF 將寄至<br><strong class="ultq-recipient-email"><?php echo esc_html( $customer['email'] ?: '（未填 Email）' ); ?></strong><br>寄出後狀態更新為「已報價」。</p>
 		</div>
 		<?php
 	}
@@ -431,6 +435,7 @@ class ULTQ_Admin {
 		$has_unit = in_array( 'col_unit', ULTQ_PDF::enabled( 'items' ), true );
 		$colspan  = $has_unit ? 8 : 7;
 		?>
+		<div class="ultq-items-scroll" role="region" aria-label="報價品項" tabindex="0">
 		<table class="widefat ultq-items" data-tax-mode="<?php echo esc_attr( $quote['tax_mode'] ); ?>">
 			<thead>
 				<tr>
@@ -453,13 +458,16 @@ class ULTQ_Admin {
 			</tbody>
 			<tfoot>
 				<tr>
-					<td colspan="<?php echo (int) $colspan; ?>" class="ultq-items__add">
+					<td colspan="<?php echo (int) $colspan; ?>">
+						<div class="ultq-items__add">
 						<select class="wc-product-search ultq-product-search" data-action="woocommerce_json_search_products_and_variations" data-placeholder="搜尋商品加入報價（名稱或貨號）" data-allow_clear="true" style="width:360px;"></select>
 						<button type="button" class="button ultq-add-line">新增自訂品項</button>
+						</div>
 					</td>
 				</tr>
 			</tfoot>
 		</table>
+		</div>
 		<script type="text/html" id="tmpl-ultq-line">
 			<?php self::render_item_row( '{{i}}', ULTQ_Quote_Post::normalize_item( array( 'qty' => 1, 'unit' => ULTQ_Settings::get( 'default_unit', '' ) ) ), false, $has_unit ); ?>
 		</script>
@@ -485,50 +493,53 @@ class ULTQ_Admin {
 						<input type="text" class="regular-text" id="ultq_q_<?php echo esc_attr( $field['id'] ); ?>" name="ultq_quote[fields][<?php echo esc_attr( $field['id'] ); ?>]" value="<?php echo esc_attr( $quote['fields'][ $field['id'] ] ?? $field['default'] ); ?>">
 					</p>
 				<?php endforeach; ?>
-				<p>
-					<label for="ultq_q_note">報價說明／條款（顯示在報價單）</label>
+				<p class="ultq-field-wide">
+					<label for="ultq_q_note">報價說明／條款 <span class="description">顯示在報價單</span></label>
 					<textarea class="widefat" rows="5" id="ultq_q_note" name="ultq_quote[note]"><?php echo esc_textarea( $quote['note'] ); ?></textarea>
 				</p>
-				<p>
-					<label for="ultq_q_admin_note">內部備註（顧客看不到）</label>
+				<p class="ultq-field-wide">
+					<label for="ultq_q_admin_note">內部備註 <span class="description">僅供內部查看</span></label>
 					<textarea class="widefat" rows="3" id="ultq_q_admin_note" name="ultq_quote[admin_note]"><?php echo esc_textarea( $quote['admin_note'] ); ?></textarea>
 				</p>
 			</div>
-			<table class="ultq-totals">
-				<tr>
-					<th>小計</th>
-					<td class="ultq-totals__subtotal"><?php echo wp_kses_post( wc_price( $totals['subtotal'] ) ); ?></td>
-				</tr>
-				<?php foreach ( ULTQ_Quote_Post::normalize_discounts( $quote['discounts'] ) as $i => $row ) : ?>
-					<?php self::render_discount_row( $i, $row ); ?>
-				<?php endforeach; ?>
-				<tr class="ultq-totals__add-discount">
-					<th colspan="2"><button type="button" class="button-link ultq-add-discount">＋ 新增折讓（專案折讓、尾數折讓…）</button></th>
-				</tr>
-				<tr>
-					<th><label for="ultq_q_shipping">運費</label></th>
-					<td><input type="text" class="wc_input_price ultq-shipping" id="ultq_q_shipping" name="ultq_quote[shipping]" value="<?php echo esc_attr( wc_format_localized_price( $quote['shipping'] ) ); ?>"></td>
-				</tr>
-				<tr>
-					<th><label for="ultq_q_tax_mode">稅別</label></th>
-					<td>
-						<select id="ultq_q_tax_mode" name="ultq_quote[tax_mode]" class="ultq-tax-mode">
-							<?php foreach ( ULTQ_Quote_Post::tax_modes() as $key => $label ) : ?>
-								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $quote['tax_mode'], $key ); ?>><?php echo esc_html( $label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-						<input type="number" class="small-text ultq-tax-rate" step="0.1" min="0" max="100" name="ultq_quote[tax_rate]" value="<?php echo esc_attr( $quote['tax_rate'] ); ?>"> %
-					</td>
-				</tr>
-				<tr>
-					<th class="ultq-totals__tax-label"><?php echo 'incl' === $quote['tax_mode'] ? '內含營業稅' : '營業稅'; ?></th>
-					<td class="ultq-totals__tax"><?php echo wp_kses_post( wc_price( $totals['tax'] ) ); ?></td>
-				</tr>
-				<tr class="ultq-totals__grand">
-					<th>總計</th>
-					<td class="ultq-totals__total"><?php echo wp_kses_post( wc_price( $totals['total'] ) ); ?></td>
-				</tr>
-			</table>
+			<div class="ultq-summary">
+				<table class="ultq-totals">
+					<caption>金額摘要</caption>
+					<tr>
+						<th>小計</th>
+						<td class="ultq-totals__subtotal"><?php echo wp_kses_post( wc_price( $totals['subtotal'] ) ); ?></td>
+					</tr>
+					<?php foreach ( ULTQ_Quote_Post::normalize_discounts( $quote['discounts'] ) as $i => $row ) : ?>
+						<?php self::render_discount_row( $i, $row ); ?>
+					<?php endforeach; ?>
+					<tr class="ultq-totals__add-discount">
+						<th colspan="2"><button type="button" class="button-link ultq-add-discount">＋ 新增折讓（專案折讓、尾數折讓…）</button></th>
+					</tr>
+					<tr>
+						<th><label for="ultq_q_shipping">運費</label></th>
+						<td><input type="text" class="wc_input_price ultq-shipping" id="ultq_q_shipping" name="ultq_quote[shipping]" value="<?php echo esc_attr( wc_format_localized_price( $quote['shipping'] ) ); ?>"></td>
+					</tr>
+					<tr>
+						<th><label for="ultq_q_tax_mode">稅別</label></th>
+						<td>
+							<select id="ultq_q_tax_mode" name="ultq_quote[tax_mode]" class="ultq-tax-mode">
+								<?php foreach ( ULTQ_Quote_Post::tax_modes() as $key => $label ) : ?>
+									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $quote['tax_mode'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<input type="number" class="small-text ultq-tax-rate" aria-label="稅率（%）" step="0.1" min="0" max="100" name="ultq_quote[tax_rate]" value="<?php echo esc_attr( $quote['tax_rate'] ); ?>"> %
+						</td>
+					</tr>
+					<tr>
+						<th class="ultq-totals__tax-label"><?php echo 'incl' === $quote['tax_mode'] ? '內含營業稅' : '營業稅'; ?></th>
+						<td class="ultq-totals__tax"><?php echo wp_kses_post( wc_price( $totals['tax'] ) ); ?></td>
+					</tr>
+					<tr class="ultq-totals__grand">
+						<th>總計</th>
+						<td class="ultq-totals__total"><?php echo wp_kses_post( wc_price( $totals['total'] ) ); ?></td>
+					</tr>
+				</table>
+			</div>
 		</div>
 		<script type="text/html" id="tmpl-ultq-discount">
 			<?php self::render_discount_row( '{{i}}', array( 'label' => '專案折讓', 'type' => 'fixed', 'value' => '' ) ); ?>
@@ -638,12 +649,12 @@ class ULTQ_Admin {
 		if ( ! isset( $_POST['_ultq_quote_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_ultq_quote_nonce'] ), 'ultq_save_quote' ) ) {
 			return false;
 		}
-		return current_user_can( ULTQ_Sales::CAPABILITY );
+		return $post_id ? ULTQ_Sales::can_manage_quote( $post_id ) : current_user_can( ULTQ_Sales::CAPABILITY );
 	}
 
 	/** 狀態下拉選單取代 WordPress 的發佈方塊，狀態在寫入資料庫前套用 */
 	public static function apply_status( $data, $postarr ) {
-		if ( ULTQ_Quote_Post::POST_TYPE !== $data['post_type'] || self::$saving || ! self::verified_request() ) {
+		if ( ULTQ_Quote_Post::POST_TYPE !== $data['post_type'] || self::$saving || ! self::verified_request( absint( $postarr['ID'] ?? 0 ) ) ) {
 			return $data;
 		}
 		$status = sanitize_key( wp_unslash( $_POST['ultq_status'] ?? '' ) );
@@ -679,7 +690,7 @@ class ULTQ_Admin {
 		if ( self::$saving || wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ) {
 			return;
 		}
-		if ( ! self::verified_request() ) {
+		if ( ! self::verified_request( $post_id ) ) {
 			return;
 		}
 		self::$saving = true;
@@ -727,7 +738,7 @@ class ULTQ_Admin {
 			ULTQ_Quote_Post::reset_token( $post_id );
 			ULTQ_Quote_Post::add_log( $post_id, '顧客 Email／會員已變更，先前寄出的報價連結已失效' );
 		}
-		if ( isset( $_POST['ultq_owner'] ) ) {
+		if ( ULTQ_Sales::can_manage_all() && isset( $_POST['ultq_owner'] ) ) {
 			ULTQ_Sales::set_owner( $post_id, absint( $_POST['ultq_owner'] ) );
 		}
 

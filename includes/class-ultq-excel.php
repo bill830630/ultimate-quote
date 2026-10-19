@@ -69,8 +69,8 @@ class ULTQ_Excel {
 	public static function handle_admin() {
 		$post_id = absint( $_GET['post'] ?? 0 );
 		check_admin_referer( 'ultq_pdf_' . $post_id );
-		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
-			wp_die( '權限不足。' );
+		if ( ! ULTQ_Sales::can_manage_quote( $post_id ) ) {
+			wp_die( '權限不足。', '', array( 'response' => 403 ) );
 		}
 		$rev = absint( $_GET['rev'] ?? 0 );
 		if ( $rev && ULTQ_Quote_Post::get_version( $post_id, $rev ) ) {

@@ -386,8 +386,8 @@ class ULTQ_PDF {
 	public static function handle_admin_preview() {
 		$post_id = absint( $_GET['post'] ?? 0 );
 		check_admin_referer( 'ultq_pdf_' . $post_id );
-		if ( ! current_user_can( ULTQ_Sales::CAPABILITY ) || ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
-			wp_die( '權限不足。' );
+		if ( ! ULTQ_Sales::can_manage_quote( $post_id ) ) {
+			wp_die( '權限不足。', '', array( 'response' => 403 ) );
 		}
 		// &rev=N：後台「報價版本」看當初寄出的那一版；沒帶就是預覽下次要寄出的內容
 		$rev = absint( $_GET['rev'] ?? 0 );
@@ -400,6 +400,9 @@ class ULTQ_PDF {
 
 	/** 顧客可以下載的條件：已寄出過報價且狀態在 ULTQ_Quote_Post::customer_visible_statuses() 內＋（token 正確 或 登入且是本人） */
 	public static function customer_can_view( $post_id, $token = '' ) {
+		if ( ULTQ_Sales::is_restricted() && ! ULTQ_Sales::can_manage_quote( $post_id ) ) {
+			return false;
+		}
 		if ( ULTQ_Quote_Post::POST_TYPE !== get_post_type( $post_id ) ) {
 			return false;
 		}

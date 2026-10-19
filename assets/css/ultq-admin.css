@@ -54,6 +54,9 @@
 .post-type-ultq_quote .column-title { width: 16%; }
 .post-type-ultq_quote .column-ultq_status { width: 9%; }
 
+/* 詢價沒有原生標題／編輯器，移除空白編輯區的間距，讓兩欄頂端對齊。 */
+.post-type-ultq_quote #post-body-content { margin-bottom: 0; }
+
 /* 編輯頁：品項 */
 .ultq-items { border: 0; box-shadow: none; }
 .ultq-items th { font-weight: 600; }
@@ -75,22 +78,52 @@
 .ultq-remove-line { color: #b32d2e; font-size: 18px; line-height: 1; text-decoration: none; }
 
 .ultq-quote-fields {
-	display: flex;
+	display: grid;
+	grid-template-columns: minmax( 0, 1fr );
 	gap: 24px;
-	margin-top: 16px;
-	flex-wrap: wrap;
+	margin-top: 24px;
+	align-items: start;
 }
-.ultq-quote-fields__left { flex: 1 1 360px; }
+.ultq-quote-fields__left { display: grid; grid-template-columns: minmax( 0, 1fr ); gap: 16px; }
+.ultq-quote-fields__left p { margin: 0; min-width: 0; }
+.ultq-quote-fields__left input { width: 100%; }
+.ultq-quote-fields__left textarea { display: block; resize: vertical; }
+.ultq-field-wide { grid-column: 1 / -1; }
+.ultq-quote-fields label .description { font-weight: 400; margin-left: 4px; }
 .ultq-quote-fields label { display: block; font-weight: 600; margin-bottom: 4px; }
-.ultq-totals { flex: 0 0 400px; border-collapse: collapse; align-self: flex-start; }
+.ultq-summary { min-width: 0; padding: 16px; border: 1px solid #dcdcde; background: #f6f7f7; }
+.ultq-totals { width: 100%; border-collapse: collapse; }
+.ultq-totals caption { text-align: left; font-weight: 600; padding-bottom: 12px; }
 .ultq-totals th { text-align: left; font-weight: 400; padding: 6px 8px; }
 .ultq-totals td { text-align: right; padding: 6px 8px; }
+.ultq-totals th:first-child { padding-left: 0; }
+.ultq-totals td:last-child { padding-right: 0; }
+.ultq-totals td { font-variant-numeric: tabular-nums; }
+.ultq-totals input, .ultq-totals select { max-width: 100%; }
+.ultq-totals .ultq-tax-mode { display: block; width: 100%; margin-bottom: 6px; }
 .ultq-totals label { display: inline; font-weight: 400; margin: 0; }
 .ultq-totals .ultq-shipping { width: 110px; text-align: right; }
+#ultq_items > .inside { container-type: inline-size; }
+.ultq-items-scroll { overflow-x: auto; }
+.ultq-items { min-width: 920px; }
+.ultq-items__product { min-width: 220px; }
+.ultq-items__note { min-width: 180px; }
+.ultq-items thead th { background: #f6f7f7; }
+.ultq-items td { padding-top: 12px; padding-bottom: 12px; }
+.ultq-items__add .select2-container { max-width: 100%; }
+@container ( min-width: 550px ) {
+	.ultq-quote-fields__left { grid-template-columns: repeat( 2, minmax( 0, 1fr ) ); }
+}
+@container ( min-width: 700px ) {
+	.ultq-quote-fields { grid-template-columns: minmax( 0, 1fr ) 320px; }
+}
+@container ( min-width: 1000px ) {
+	.ultq-quote-fields { grid-template-columns: minmax( 0, 1fr ) 360px; }
+}
 /* 整單折讓 */
 .ultq-discount th { padding-right: 0; }
 .ultq-discount .ultq-discount__label { width: 100%; }
-.ultq-discount .ultq-discount__value { width: 90px; text-align: right; }
+.ultq-discount .ultq-discount__value { width: 70px; text-align: right; }
 .ultq-discount__amount { color: #b32d2e; font-size: 12px; min-height: 0; }
 .ultq-remove-discount { color: #b32d2e; font-size: 18px; line-height: 1; text-decoration: none; vertical-align: middle; }
 .ultq-totals__add-discount th { padding-top: 0; }
@@ -127,6 +160,16 @@
 .ultq-response--accept { background: #edfaef; border-left-color: #00a32a; }
 .ultq-response--reject { background: #fcf0f1; border-left-color: #d63638; }
 .ultq-actions__buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 6px; }
+.ultq-actions > p:first-child { margin-top: 0; }
+.ultq-actions label { display: inline-block; margin-bottom: 4px; }
+.ultq-actions__hint { border-bottom: 1px solid #dcdcde; padding-bottom: 16px; }
+.ultq-actions__buttons .button { flex: 1 1 auto; text-align: center; }
+.ultq-actions__buttons .ultq-btn-send { flex-basis: 100%; }
+.ultq-actions__recipient { overflow-wrap: anywhere; line-height: 1.6; }
+.ultq-actions__recipient strong { color: #1d2327; }
+.ultq-actions__meta { line-height: 1.7; }
+.ultq-actions__files { padding-top: 12px; border-top: 1px solid #dcdcde; }
+.post-type-ultq_quote #side-sortables .postbox-header .hndle { overflow-wrap: anywhere; }
 .ultq-btn-preview { text-align: center; }
 .ultq-actions__files { display: flex; gap: 6px; }
 .ultq-actions__files .button { flex: 1 1 0; }
