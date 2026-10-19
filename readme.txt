@@ -2,9 +2,9 @@
 Contributors: ctrla
 Tags: woocommerce, b2b, quote, 詢價, 報價單
 Requires at least: 6.4
-Tested up to: 6.8
+Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 1.3.30
+Stable tag: 1.3.31
 License: GPLv2 or later
 
 B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請審核、B2B 專屬價／階梯價、後台報價並寄出中文報價單 PDF。
@@ -28,6 +28,9 @@ B2B 詢價系統：詢價清單、隱藏價格改詢價按鈕、B2B 會員申請
 * 通知：Email（可在 WooCommerce 電子郵件設定調整）＋ LINE（搭配「終極登入」外掛）
 
 == Changelog ==
+
+= 1.3.31 =
+* 已在 WordPress 7.1 與 WooCommerce 11.2 完成相容性測試，外掛更新頁會顯示相容
 
 = 1.3.30 =
 * 詢價單列表新增「批次指派業務」，管理員與商店管理員可將勾選的詢價指派給業務或取消指派，每張詢價都會留下處理紀錄
